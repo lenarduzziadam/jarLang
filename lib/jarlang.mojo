@@ -18,8 +18,8 @@ TT_RETURN     = "mend"
 TT_FUNCTION   = "forge"
 TT_IDENTIFIER = "mark"
 TT_COMMENT    = "//"
-TT_MLSTART    = "guard/"
-TT_MLEND      = "/guard"
+TT_MLSTART    = ":guard/"
+TT_MLEND      = "/guard:"
 
 
 @value
@@ -36,6 +36,22 @@ struct Token:
             return self.type + ":" + self.value
         return self.type
 
+##################################
+### ERROR HANDLING FOR JARLANG ###
+##################################
+
+@value
+struct LexError:
+    var message: String
+    var position: Int
+    
+    fn __init__(inout self, message: String, position: Int):
+        self.message = message
+        self.position = position
+    
+    fn __repr__(self) -> String:
+        return "Battle Error at position " + str(self.position) + ": " + self.message
+
 
 ################################
 ### LEXER FOR JARLANG LANGUAGE ###
@@ -49,15 +65,18 @@ struct Lexer:
     fn __init__(inout self, text: String):
         self.text = text
         self.pos = -1
-        self.curr = None
+        self.curr = ""
         self.advance()
     
     fn advance(inout self):
         """Advance the 'pos' pointer and set 'curr' character."""
         self.pos += 1
-        self.curr = self.text[self.pos] if self.pos < len(self.text) else None
+        if self.pos < len(self.text):
+            self.curr = self.text[self.pos]
+        else:
+            self.curr = ""
 
-    fn generate_tokens(inout self) -> [Token]:
+    fn generate_tokens(inout self) -> List[Token]:
         """Tokenize the input text into a list of tokens."""
         tokens = []
         # Skips whitespace aka None
@@ -83,13 +102,8 @@ struct Lexer:
                 self.advance()
             # Handle division and comments
             elif self.curr == '/':
-                # Check for comments
-                if self.peek() == '/':
-                    self.skip_comment()
-                # Otherwise it's a division operator
-                else:
-                    tokens.append(Token(TT_DIV, self.curr))
-                    self.advance()
+                tokens.append(Token(TT_DIV, self.curr))
+                self.advance()
             ## Handle parentheses    
             elif self.curr == '(':
                 tokens.append(Token(TT_LPAREN, self.curr))
@@ -97,9 +111,6 @@ struct Lexer:
             elif self.curr == ')':
                 tokens.append(Token(TT_RPAREN, self.curr))
                 self.advance()
-            # Handle identifiers and keywords
-            elif self.curr.isalpha():
-                tokens.append(self.make_identifier())
             else:
                 raise Exception(f"Illegal character '{self.curr}'")
 
@@ -122,9 +133,34 @@ struct Lexer:
                 num_str += '.'
             else:
                 num_str += self.curr
+            self.advance()
             
         # Check if it's an int or float token
         if dot_count == 0:
             return Token(TT_INT, int(num_str))
         return Token(TT_FLOAT, float(num_str))
+    
+
+
+
+fn run(filename: String, text: String) -> String:
+    """Run the lexer on the input text and return a formatted result."""
+    var lexer = Lexer(text)
+    var result = lexer.generate_tokens()
+    var tokens = result[0]
+    var error = result[1]
+
+    ## Check for errors
+    if error is not None:
+        return "ERROR: " + error.__repr__()
+    
+    ## Format tokens for output
+    else:
+        var output = "TOKENS: "
+        for i in range(len(tokens)):
+            output += tokens[i].__repr__()
+            if i < len(tokens) - 1:
+                output += ", "
+        return output
+    
 

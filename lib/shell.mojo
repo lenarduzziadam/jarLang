@@ -12,11 +12,8 @@ fn shell_repl():
                 break
             
             # Run the lexer on the input
-            tokens = run('<stdin>', text)
-            
-            print("JarKnight tokens:")
-            for token in tokens:
-                print("  ", token.__repr__())
+            var result = run('<stdin>', text)
+            print("JarKnight:", result)
                     
         except:
             print("Error reading input")
