@@ -134,7 +134,9 @@ fn test_lexer(text: String) -> String:
     
     # Test advance functionality
     result += "Advancing through characters of text:\n"
-    for i in range(len(text) + 1):
+
+    # Loop through the text length to ensure we cover all characters
+    for _ in range(len(text) + 1):
         if lexer.curr != "":
             result += "  Pos " + String(lexer.pos) + ": '" + lexer.curr + "'\n"
             lexer.advance()

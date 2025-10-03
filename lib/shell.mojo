@@ -18,7 +18,7 @@ fn shell_repl():
             else:
                 # Test the lexer with the input
                 var result = test_lexer(text)
-                print("JarKnight sparring:")
+                print("JarKnight:")
                 print(result)
                     
         except:
