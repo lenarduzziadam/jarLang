@@ -1,57 +1,34 @@
-import .constants
 
-##################################
-### TOKENS OF JARLANG LANGUAGE ###
-##################################
+# imports tokens and other constants
+from lib import CONSTANTS
 
-TT_INT        = "int"
-TT_FLOAT      = "float"
-TT_STRING     = "chant"
-TT_PLUS       = "commune"
-TT_MINUS      = "banish"
-TT_MUL        = "rally"
-TT_DIV        = "slash"      
-TT_LPAREN     = "gather"
-TT_RPAREN     = "disperse"
-TT_EOF        = "end"
-TT_RETURN     = "mend"
-TT_FUNCTION   = "forge"
-TT_IDENTIFIER = "mark"
-TT_COMMENT    = "//"
-TT_MLSTART    = ":guard/"
-TT_MLEND      = "/guard:"
-
-
-@value
-struct Token:
-    var type: String
-    var value: String
-    
-    fn __init__(inout self, type_: String, value: String = ""):
-        self.type = type_
-        self.value = value
-
-    fn __repr__(self) -> String:
-        if self.value:
-            return self.type + ":" + self.value
-        return self.type
-
-##################################
+##############################
 ### ERROR HANDLING FOR JARLANG ###
 ##################################
 
-struct LexError:
-    # Mojo has more strict typing regulations so remember to define types
-    var message: String
-    var position: Int
-    
-    fn __init__(inout self, message: String, position: Int):
-        self.message = message
-        self.position = position
-    
-    fn __repr__(self) -> String:
-        return "Battle Error at position " + str(self.position) + ": " + self.message
+# Define error types as an enum
+@fieldwise_init
+struct ErrorType:
+    alias ILLEGAL_CHAR = "IllegalCharacter"
+    alias SYNTAX_ERROR = "SyntaxError" 
+    alias UNEXPECTED_EOF = "UnexpectedEOF"
 
+##################################
+### TOKENIZING FOR JARLANG ###
+##################################
+
+struct Token:
+    var type: String
+    var value: String
+
+    fn __init__(out self, type_: String, value: String = ""):
+        self.type = type_
+        self.value = value
+    
+    fn __repr__(mut self) -> String:
+        if self.value != "":
+            return self.type + ":" + self.value
+        return self.type
 
 ################################
 ### LEXER FOR JARLANG LANGUAGE ###
@@ -62,105 +39,85 @@ struct Lexer:
     var pos: Int            
     var curr: String 
     
-    fn __init__(inout self, text: String):
+    fn __init__(out self, text: String):
         self.text = text
         self.pos = -1
         self.curr = ""
         self.advance()
     
-    fn advance(inout self):
+    fn advance(mut self):
         """Advance the 'pos' pointer and set 'curr' character."""
         self.pos += 1
         if self.pos < len(self.text):
-            self.curr = self.text[self.pos]
+            self.curr = String(self.text[self.pos])  # Convert StringSlice to String
         else:
             self.curr = ""
 
-    fn generate_tokens(inout self) -> List[Token]:
-        """Tokenize the input text into a list of tokens."""
-        tokens = []
-        # Skips whitespace aka None
-        while self.curr != None:
-            # Skip whitespace
-            if self.curr in [' ', '\t']:
-                self.advance()
-            # Handle numbers (integers and floats)
-            elif self.curr in DIGITS:
-                tokens.append(self.make_number())
-            # Handle strings
-            elif self.curr in ['"', "'"]:
-                tokens.append(self.make_string())
-            # Handle operators and parentheses
-            elif self.curr == '+':
-                tokens.append(Token(TT_PLUS, self.curr))
-                self.advance()
-            elif self.curr == '-':
-                tokens.append(Token(TT_MINUS, self.curr))
-                self.advance()
-            elif self.curr == '*':
-                tokens.append(Token(TT_MUL, self.curr))
-                self.advance()
-            # Handle division and comments
-            elif self.curr == '/':
-                tokens.append(Token(TT_DIV, self.curr))
-                self.advance()
-            ## Handle parentheses    
-            elif self.curr == '(':
-                tokens.append(Token(TT_LPAREN, self.curr))
-                self.advance()
-            elif self.curr == ')':
-                tokens.append(Token(TT_RPAREN, self.curr))
-                self.advance()
-            else:
-                raise Exception(f"Illegal character '{self.curr}'")
+    # fn is_digit(self, c: String) -> Bool:
+    #     """Check if character is a digit."""
+    #     return c in CONSTANTS.DIGITS
+    
+    # fn generate_tokens(mut self) raises -> List[Token]:
+    #     """Tokenize the input text into a list of tokens."""
+    #     var tokens = List[Token]()
+        
+    #     while self.curr != "":
+    #         # Skip whitespace
+    #         if self.curr == " " or self.curr == "\t" or self.curr == "\n":
+    #             self.advance()
+    #         # Handle numbers (integers and floats)
+    #         elif self.is_digit(self.curr):
+    #             tokens.append(self.make_number())
+    #         # Handle operators and parentheses
+    #         elif self.curr == "+":
+    #             tokens.append(Token(CONSTANTS.TT_PLUS, self.curr))
+    #             self.advance()
+    #         elif self.curr == "-":
+    #             tokens.append(Token(CONSTANTS.TT_MINUS, self.curr))
+    #             self.advance()
+    #         elif self.curr == "*":
+    #             tokens.append(Token(CONSTANTS.TT_MUL, self.curr))
+    #             self.advance()
+    #         elif self.curr == "/":
+    #             tokens.append(Token(CONSTANTS.TT_DIV, self.curr))
+    #             self.advance()
+    #         elif self.curr == "(":
+    #             tokens.append(Token(CONSTANTS.TT_LPAREN, self.curr))
+    #             self.advance()
+    #         elif self.curr == ")":
+    #             tokens.append(Token(CONSTANTS.TT_RPAREN, self.curr))
+    #             self.advance()
+    #         else:
+    #             char = self.curr
+    #             self.advance()
+    #             return [], IllegalCharError("Illegal character '" + char + "'", "at position " + String(self.pos))
 
-        # Append EOF token at the end
-        tokens.append(Token(TT_EOF, None))
-        return tokens
+        
+    #     return tokens, None
 
     
-    fn make_number(inout self) -> Token:
-        """Create a number token (integer or float)."""
-        num_str = ""
-        dot_count = 0
-        # Collect digits and a single dot for floats
-        while self.curr != None and (self.curr in DIGITS or self.curr == '.'):
-            if self.curr == '.':
-                # if dot count is 1 we break as we only want one dot in a number
-                if dot_count == 1:
-                    break
-                dot_count += 1
-                num_str += '.'
-            else:
-                num_str += self.curr
-            self.advance()
-            
-        # Check if it's an int or float token
-        if dot_count == 0:
-            return Token(TT_INT, int(num_str))
-        return Token(TT_FLOAT, float(num_str))
-    
+    # fn make_number(mut self) -> Token:
+    #     """Create a number token (integer or float)."""
+    #     var num_str = String("")
+    #     var dot_count = 0
+        
+    #     # Collect digits and a single dot for floats
+    #     while self.curr != "" and (self.is_digit(self.curr) or self.curr == "."):
+    #         if self.curr == ".":
+    #             if dot_count == 1:
+    #                 break
+    #             dot_count += 1
+    #             num_str += "."
+    #         else:
+    #             num_str += self.curr
+    #         self.advance()
+        
+    #     # Return appropriate token type
+    #     if dot_count == 0:
+    #         return Token(CONSTANTS.TT_INT, num_str)
+    #     else:
+    #         return Token(CONSTANTS.TT_FLOAT, num_str)
+        
 
-
-
-fn run(filename: String, text: String) -> String:
-    """Run the lexer on the input text and return a formatted result."""
-    var lexer = Lexer(text)
-    var result = lexer.generate_tokens()
-    var tokens = result[0]
-    var error = result[1]
-
-    ## Check for errors
-    if error is not None:
-        return "ERROR: " + error.__repr__()
-    
-    ## Format tokens for output
-    else:
-        var output = "TOKENS: "
-        for i in range(len(tokens)):
-            output += tokens[i].__repr__()
-            if i < len(tokens) - 1:
-                output += ", "
-        return output
-    
+    # """
 
