@@ -10,7 +10,7 @@ fn shell_repl():
             if text == "q!":
                 break
             # TODO: Parse and execute Jarlang code here
-            print("Echo:", text)
+            print("JarKnight:", text)
         except:
             print("Error reading input")
             break
