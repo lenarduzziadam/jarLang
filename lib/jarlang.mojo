@@ -119,5 +119,28 @@ struct Lexer:
     #         return Token(CONSTANTS.TT_FLOAT, num_str)
         
 
-    # """
+####################################
+### SIMPLE TEST FUNCTION ###
+####################################
+
+fn test_lexer(text: String) -> String:
+    """Simple test function to verify lexer basics work."""
+    var lexer = Lexer(text)
+    
+    # Test that lexer initializes properly
+    var result = "Lexer initialized with text: '" + lexer.text + "'\n"
+    result += "Current character: '" + lexer.curr + "'\n"
+    result += "Position: " + String(lexer.pos) + "\n"
+    
+    # Test advance functionality
+    result += "Advancing through characters of text:\n"
+    for i in range(len(text) + 1):
+        if lexer.curr != "":
+            result += "  Pos " + String(lexer.pos) + ": '" + lexer.curr + "'\n"
+            lexer.advance()
+        else:
+            result += "  Reached end of text\n"
+            break
+    
+    return result
 
