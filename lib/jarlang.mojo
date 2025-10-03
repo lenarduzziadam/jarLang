@@ -40,8 +40,8 @@ struct Token:
 ### ERROR HANDLING FOR JARLANG ###
 ##################################
 
-@value
 struct LexError:
+    # Mojo has more strict typing regulations so remember to define types
     var message: String
     var position: Int
     
