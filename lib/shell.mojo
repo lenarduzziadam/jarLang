@@ -12,15 +12,12 @@ fn shell_repl():
                 break
             
             # Run the lexer on the input
-            tokens, error = run('<stdin>', text)
+            tokens = run('<stdin>', text)
             
-            if error:
-                print("Battle Error:", error.as_string())
-            else:
-                print("JarKnight tokens:")
-                for token in tokens:
-                    print("  ", token.__repr__())
+            print("JarKnight tokens:")
+            for token in tokens:
+                print("  ", token.__repr__())
                     
-        except Exception as e:
-            print("Error reading input:", e)
+        except:
+            print("Error reading input")
             break

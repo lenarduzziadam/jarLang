@@ -57,6 +57,7 @@ TT_MLSTART    = "guard/"
 TT_MLEND      = "/guard"
 
 
+@value
 struct Token:
     var type: String
     var value: String
@@ -75,78 +76,79 @@ struct Token:
 ### LEXER FOR JARLANG LANGUAGE ###
 ################################
 
-class Lexer:
+struct Lexer:
     var text: String     
     var pos: Int            
     var curr: String 
+    
     fn __init__(inout self, text: String):
         self.text = text
         self.pos = -1
-        self.curr = None  # Mojo doesn't have None, use empty string or Optional type
+        self.curr = ""
         self.advance()
     
     fn advance(inout self):
         """Advance the 'pos' pointer and set 'curr' character."""
         self.pos += 1
-        self.curr = self.text[self.pos] if self.pos < len(self.text) else None
+        if self.pos < len(self.text):
+            self.curr = self.text[self.pos]
+        else:
+            self.curr = ""
 
     fn generate_tokens(inout self) -> List[Token]:
         """Tokenize the input text into a list of tokens."""
-        tokens = []
-        # Skips whitespace aka None
-        while self.curr != None:
+        var tokens = List[Token]()
+        
+        # Simple approach - let's just store them as we go and return them
+        while self.curr != "":
             # Skip whitespace
-            if self.curr in [' ', '\t']:
+            if self.curr == ' ' or self.curr == '\t':
                 self.advance()
             # Handle numbers (integers and floats)
             elif self.curr in DIGITS:
-                tokens.append(self.make_number())
-            # Handle strings
-            elif self.curr in ['"', "'"]:
-                tokens.append(self.make_string())
+                var token = self.make_number()
+                tokens.append(token)
             # Handle operators and parentheses
             elif self.curr == '+':
-                tokens.append(Token(TT_PLUS, self.curr))
+                var token = Token(TT_PLUS, self.curr)
+                tokens.append(token)
                 self.advance()
             elif self.curr == '-':
-                tokens.append(Token(TT_MINUS, self.curr))
+                var token = Token(TT_MINUS, self.curr)
+                tokens.append(token)
                 self.advance()
             elif self.curr == '*':
-                tokens.append(Token(TT_MUL, self.curr))
+                var token = Token(TT_MUL, self.curr)
+                tokens.append(token)
                 self.advance()
-            # Handle division and comments
             elif self.curr == '/':
-                ##added comment handling later 
-                tokens.append(Token(TT_DIV, self.curr))
+                var token = Token(TT_DIV, self.curr)
+                tokens.append(token)
                 self.advance()
-            ## Handle parentheses    
             elif self.curr == '(':
-                tokens.append(Token(TT_LPAREN, self.curr))
+                var token = Token(TT_LPAREN, self.curr)
+                tokens.append(token)
                 self.advance()
             elif self.curr == ')':
-                tokens.append(Token(TT_RPAREN, self.curr))
+                var token = Token(TT_RPAREN, self.curr)
+                tokens.append(token)
                 self.advance()
-            # Handle identifiers and keywords
-            elif self.curr.isalpha():
-                tokens.append(self.make_identifier())
             else:
-                pos_start = self.pos
-                char = self.curr
+                # Skip unknown characters for now
                 self.advance()
-                pos_end = self.pos
-                return [], IllegalCharError(pos_start, pos_end, "'" + char + "'")
 
         # Append EOF token at the end
-        tokens.append(Token(TT_EOF, ""))
-        return tokens, None
+        var eof_token = Token(TT_EOF, "")
+        tokens.append(eof_token)
+        return tokens
 
     
     fn make_number(inout self) -> Token:
         """Create a number token (integer or float)."""
-        num_str = ""
-        dot_count = 0
+        var num_str = ""
+        var dot_count = 0
         # Collect digits and a single dot for floats
-        while self.curr != None and (self.curr in DIGITS or self.curr == '.'):
+        while self.curr != "" and (self.curr in DIGITS or self.curr == '.'):
             if self.curr == '.':
                 # if dot count is 1 we break as we only want one dot in a number
                 if dot_count == 1:
@@ -160,8 +162,8 @@ class Lexer:
             
         # Check if it's an int or float token
         if dot_count == 0:
-            return Token(TT_INT, int(num_str))
-        return Token(TT_FLOAT, float(num_str))
+            return Token(TT_INT, num_str)
+        return Token(TT_FLOAT, num_str)
     
     fn make_string(inout self) -> Token:
         """Create a string token."""
@@ -213,10 +215,9 @@ class Lexer:
 ### RUNNER FOR JARLANG LANGUAGE ###
 ##############################
 
-fn run(fn: String, text: String) -> ( List[Token], Error ):
-    """Run the lexer on the input text and return tokens or an error."""
-    # Generate tokens
-    lexer = Lexer(text)
-    tokens, error = lexer.generate_tokens()
+fn run(fn_name: String, text: String) -> List[Token]:
+    """Run the lexer on the input text and return tokens."""
+    var lexer = Lexer(text)
+    var tokens = lexer.generate_tokens()
     
-    return tokens, error
+    return tokens
