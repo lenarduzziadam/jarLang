@@ -150,7 +150,19 @@ struct Lexer:
             elif self.curr == "}":
                 tokens.append(Token(CONSTANTS.TT_RBRACE, self.curr))
                 self.advance()
+            
+            # Handle single line comments
+            elif self.curr == "#":
+                self.advance()  # Skip the '#' character
+                # Skip the rest of the line as a comment
+                while self.curr != "" and self.curr != "\n":
+                    self.advance()
+                # If we stopped because we hit a newline, advance past it
+                if self.curr == "\n":
+                    self.advance()
 
+            # TODO`: Handle multi-line comments (e.g., :guard/ {comment_text} /guard:)
+        
             elif self.curr == "\"":
                 # Handle string literals
                 self.advance()  # Skip the opening quote
@@ -162,18 +174,18 @@ struct Lexer:
                     self.advance()  # Skip the closing quote
                     tokens.append(Token(CONSTANTS.TT_STRING, str_val))
                 else:
-                    return List[Token](), IllegalCharError("Unterminated string literal", "at position " + String(self.pos))
+                    return List[Token](), IllegalCharError("Unterminated string literal at position " + String(self.pos) + ": " + str_val, "at position " + String(self.pos))
 
             # Handle illegal characters
             elif self.curr != "":
                 char = self.curr
                 self.advance()
-                return List[Token](), IllegalCharError("Illegal character '" + char + "'", "at position " + String(self.pos))
+                return List[Token](), IllegalCharError("Illegal character '" + char + "'" + " at position " + String(self.pos), "at position " + String(self.pos))
 
             else:
                 char = self.curr
                 self.advance()
-                return List[Token](), IllegalCharError("Illegal character '" + char + "'", "at position " + String(self.pos))
+                return List[Token](), IllegalCharError("Illegal character '" + char + "'" + String(self.pos), "at position " + String(self.pos))
 
 
         return tokens.copy(), None
