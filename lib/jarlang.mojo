@@ -1,6 +1,6 @@
 
 # imports tokens and other constants
-from lib import CONSTANTS
+from lib.CONSTANTS import *
 
 ##############################
 ### ERROR HANDLING FOR JARLANG ###
@@ -113,6 +113,11 @@ struct Lexer:
             elif self.curr == ")":
                 tokens.append(Token(CONSTANTS.TT_RPAREN, self.curr))
                 self.advance()
+            # Handle illegal characters
+            elif self.curr != "":
+                char = self.curr
+                self.advance()
+                return List[Token](), IllegalCharError("Illegal character '" + char + "'", "at position " + String(self.pos))
             else:
                 char = self.curr
                 self.advance()
