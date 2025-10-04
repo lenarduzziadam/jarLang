@@ -20,42 +20,34 @@ fn shell_repl():
             elif text == "!help":
                 print("Jarlang Commands:")
                 print("  q! - quit")
-                print("  test! - run built-in tests")
-                print("  tokens <expr> - tokenize expression")
-                print("  help - show this help")
+                print("  !test - run built-in tests")
+                print("  !help - show this help")
                 print("  <expr> - directly tokenize expression")
-
-            ## Command to tokenize an expression and show tokens
-            elif text.startswith("tokens "):
-                var expression = text[7:len(text)]  # Get the expression after "tokens "
-                var lexer = Lexer(expression)
-                var result = lexer.generate_tokens()
-                var tokens = result[0].copy()  # Get the List[Token] from
-
-                # BUILD STRING REPRESENTATION HERE (replace the print lines)
-                var token_str = "["
-                var idx = 0
-                while idx < len(tokens):
-                    var token = tokens[idx].copy()
-                    if idx > 0:
-                        token_str += ", "
-                    token_str += token.type + ":" + token.value
-                    idx += 1
-                token_str += "]"
-                print("Tokens:", token_str)
-                text += "\nTokenized successfully! Found " + String(len(tokens)) + " tokens"
-                print("JarKnight:", text)
-
-            ## Debug command to show internal state of lexer
-            elif text == "debug":
-                var expression = input("Enter expression to debug: ")
-                var lexer = Lexer(expression)
-                print("Input:", expression)
-                print("Length:", len(expression))
             
             ## Default case: just echo input for now
             else:
                 # Test the lexer with the input
+                var lexer = Lexer(text)
+                var result = lexer.generate_tokens()
+                var tokens = result[0].copy()
+                var error = result[1]
+
+                # Check for errors first
+                if error:
+                    print("JarKnight Ashamed:", error.value().message)
+                else:
+                    print("Found", len(tokens), "tokens")
+                    var token_str = "[{"
+                    var idx = 0
+                    while idx < len(tokens):
+                        var token = tokens[idx].copy()
+                        if idx > 0:
+                            token_str += "}, {"
+                        token_str += token.type + ":" + token.value
+                        idx += 1
+                    token_str += "}]"
+                    print("Tokens:", token_str)
+
                 print("JarKnight:", text)
                 
                     
