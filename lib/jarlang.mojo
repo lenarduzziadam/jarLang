@@ -91,9 +91,11 @@ struct Lexer:
             # Skip whitespace
             if self.curr == " " or self.curr == "\t" or self.curr == "\n":
                 self.advance()
+
             # Handle numbers (integers and floats)
             elif self.is_digit(self.curr):
                 tokens.append(self.make_number())
+
             # Handle operators and parentheses
             elif self.curr == "+":
                 tokens.append(Token(CONSTANTS.TT_PLUS, self.curr))
@@ -113,11 +115,61 @@ struct Lexer:
             elif self.curr == ")":
                 tokens.append(Token(CONSTANTS.TT_RPAREN, self.curr))
                 self.advance()
+            # Handle exponentiation
+            elif self.curr == "^":
+                tokens.append(Token(CONSTANTS.TT_POW, self.curr))
+                self.advance()
+
+            # Handle equality and relational operators
+            elif self.curr == "=":
+                tokens.append(Token(CONSTANTS.TT_EQ, self.curr))
+                self.advance()
+            elif self.curr == "!":
+                tokens.append(Token(CONSTANTS.TT_NE, self.curr))
+                self.advance()
+            elif self.curr == "<":
+                tokens.append(Token(CONSTANTS.TT_LT, self.curr))
+                self.advance()
+            elif self.curr == ">":
+                tokens.append(Token(CONSTANTS.TT_GT, self.curr))
+                self.advance()
+
+            # Handle mathematical and logical operators
+            elif self.curr == ",":
+                tokens.append(Token(CONSTANTS.TT_COMMA, self.curr))
+                self.advance()
+            elif self.curr == ":":
+                tokens.append(Token(CONSTANTS.TT_COLON, self.curr))
+                self.advance()
+            elif self.curr == ";":
+                tokens.append(Token(CONSTANTS.TT_SEMI, self.curr))
+                self.advance()
+            elif self.curr == "{":
+                tokens.append(Token(CONSTANTS.TT_LBRACE, self.curr))
+                self.advance()
+            elif self.curr == "}":
+                tokens.append(Token(CONSTANTS.TT_RBRACE, self.curr))
+                self.advance()
+
+            elif self.curr == "\"":
+                # Handle string literals
+                self.advance()  # Skip the opening quote
+                var str_val = String("")
+                while self.curr != "" and self.curr != "\"":
+                    str_val += self.curr
+                    self.advance()
+                if self.curr == "\"":
+                    self.advance()  # Skip the closing quote
+                    tokens.append(Token(CONSTANTS.TT_STRING, str_val))
+                else:
+                    return List[Token](), IllegalCharError("Unterminated string literal", "at position " + String(self.pos))
+
             # Handle illegal characters
             elif self.curr != "":
                 char = self.curr
                 self.advance()
                 return List[Token](), IllegalCharError("Illegal character '" + char + "'", "at position " + String(self.pos))
+
             else:
                 char = self.curr
                 self.advance()
