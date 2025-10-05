@@ -28,7 +28,7 @@ fn shell_repl():
             else:
                 try:
                     # Test the lexer with the input
-                    var result = run_lexer(text)
+                    var result = run_lexer("<stdin>", text)
                     var tokens = result[0].copy()
                     var error = result[1]
 

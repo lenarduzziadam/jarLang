@@ -123,11 +123,13 @@ struct Position(Copyable, Movable):
 ################################
 
 struct Lexer:
+    var filename: String
     var text: String
     var pos: Position
     var curr: String
 
-    fn __init__(out self, text: String):
+    fn __init__(out self, filename: String, text: String):
+        self.filename = filename
         self.text = text
         self.pos = Position(-1, 0, -1)
         self.curr = ""
@@ -278,8 +280,8 @@ struct Lexer:
 ### RUNNER FOR JARLANG ###
 ####################################
 
-fn run_lexer(text: String) raises -> (List[Token], Optional[IllegalCharError]):
-    var lexer = Lexer(text)
+fn run_lexer(filename: String, text: String) raises -> (List[Token], Optional[IllegalCharError]):
+    var lexer = Lexer(filename, text)
     var result = lexer.generate_tokens()
     var tokens = result[0].copy()
     var error = result[1]
@@ -293,8 +295,8 @@ fn run_lexer(text: String) raises -> (List[Token], Optional[IllegalCharError]):
 
 fn test_lexer(text: String) -> String:
     """Simple test function to verify lexer basics work."""
-    var lexer = Lexer(text)
-    
+    var lexer = Lexer("<stdin>", text)
+
     # Test that lexer initializes properly
     var result = "Lexer initialized with text: '" + lexer.text + "'\n"
     result += "Current character: '" + lexer.curr + "'\n"
