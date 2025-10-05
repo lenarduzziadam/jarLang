@@ -36,19 +36,23 @@ fn shell_repl():
                 if error:
                     print("JarKnight Ashamed:", error.value().message)
                 else:
-                    print("Found", len(tokens), "tokens")
-                    var token_str = "[{"
-                    var idx = 0
-                    while idx < len(tokens):
-                        var token = tokens[idx].copy()
-                        if idx > 0:
-                            token_str += "}, {"
-                        token_str += token.type + ":" + token.value
-                        idx += 1
-                    token_str += "}]"
-                    print("Tokens:", token_str)
+                    if len(tokens) == 0:
+                        print("No tokens found")
+                    else:
+                        print("Found", len(tokens), "tokens")
+                        var token_str = "[{"
+                        var idx = 0
+                        while idx < len(tokens):
+                            var token = tokens[idx].copy()
+                            if idx > 0:
+                                token_str += "}, {"
+                            token_str += token.type + ":" + "'" + token.value + "'"
+                            idx += 1
+                        token_str += "}]"
+                        print("Tokens:", token_str)
 
-                print("JarKnight:", text)
+                        # Print the original input for now as a placeholder
+                        print("JarKnight:", text)
                 
                     
         except:
