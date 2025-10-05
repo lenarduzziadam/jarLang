@@ -211,7 +211,20 @@ struct Lexer:
             return Token(CONSTANTS.TT_INT, num_str)
         else:
             return Token(CONSTANTS.TT_FLOAT, num_str)
-        
+
+
+####################################
+### RUNNER FOR JARLANG ###
+####################################
+
+fn run_lexer(text: String) raises -> (List[Token], Optional[IllegalCharError]):
+    var lexer = Lexer(text)
+    var result = lexer.generate_tokens()
+    var tokens = result[0].copy()
+    var error = result[1]
+
+    return tokens.copy(), error
+
 
 ####################################
 ### SIMPLE TEST FUNCTION ###

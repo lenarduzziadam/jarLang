@@ -27,8 +27,7 @@ fn shell_repl():
             ## Default case: just echo input for now
             else:
                 # Test the lexer with the input
-                var lexer = Lexer(text)
-                var result = lexer.generate_tokens()
+                var result = run_lexer(text)
                 var tokens = result[0].copy()
                 var error = result[1]
 
@@ -36,23 +35,24 @@ fn shell_repl():
                 if error:
                     print("JarKnight Ashamed:", error.value().message)
                 else:
-                    if len(tokens) == 0:
-                        print("No tokens found")
-                    else:
-                        print("Found", len(tokens), "tokens")
-                        var token_str = "[{"
-                        var idx = 0
-                        while idx < len(tokens):
-                            var token = tokens[idx].copy()
-                            if idx > 0:
-                                token_str += "}, {"
-                            token_str += token.type + ":" + "'" + token.value + "'"
-                            idx += 1
-                        token_str += "}]"
-                        print("Tokens:", token_str)
+
+                    # if len(tokens) == 0:
+                    #     print("No tokens found")
+                    # else:
+                    #     print("Found", len(tokens), "tokens")
+                    #     var token_str = "[{"
+                    #     var idx = 0
+                    #     while idx < len(tokens):
+                    #         var token = tokens[idx].copy()
+                    #         if idx > 0:
+                    #             token_str += "}, {"
+                    #         token_str += token.type + ":" + "'" + token.value + "'"
+                    #         idx += 1
+                    #     token_str += "}]"
+                    #     print("Tokens:", token_str)
 
                         # Print the original input for now as a placeholder
-                        print("JarKnight:", text)
+                    print("JarKnight:", String(result))
                 
                     
         except:
