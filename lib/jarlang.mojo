@@ -58,6 +58,34 @@ struct Token(Copyable, Movable):
         return self.type
 
 ################################
+### POSITION TRACKING FOR JARLANG ###
+################################
+
+struct Position:
+    var line: Int
+    var column: Int
+
+    fn __init__(out self, idx: Int, line: Int, column: Int):
+        self.idx = idx
+        self.line = line
+        self.column = column
+
+    fn advance(mut self, current_char: Optional[String] = None):
+        """Advance the position by one character."""
+        self.idx += 1
+        self.column += 1
+
+        if current_char == "\n":
+            self.line += 1
+            self.column = 0
+
+        return self
+    
+    fn copy(mut self) -> Position:
+        """Create a copy of the current position."""
+        return Position(self.idx, self.line, self.column)
+
+################################
 ### LEXER FOR JARLANG LANGUAGE ###
 ################################
 
