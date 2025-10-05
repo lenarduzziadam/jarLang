@@ -32,6 +32,26 @@ struct IllegalCharError(Copyable, Movable):
     fn __repr__(mut self) -> String:
         return "IllegalCharError: " + self.message + " " + self.position
 
+
+struct SyntaxError(Copyable, Movable):
+    var message: String
+    var position: String
+
+    fn __copyinit__(out self, read other: SyntaxError):
+        self.message = other.message
+        self.position = other.position
+
+    fn __moveinit__(out self, deinit other: SyntaxError):
+        self.message = other.message
+        self.position = other.position
+
+    fn __init__(out self, message: String, position: String):
+        self.message = message
+        self.position = position
+
+    fn __repr__(mut self) -> String:
+        return "SyntaxError: " + self.message + " " + self.position
+
 ##################################
 ### TOKENIZING FOR JARLANG ###
 ##################################
@@ -61,9 +81,20 @@ struct Token(Copyable, Movable):
 ### POSITION TRACKING FOR JARLANG ###
 ################################
 
-struct Position:
+struct Position(Copyable, Movable):
+    var idx: Int
     var line: Int
     var column: Int
+
+    fn __copyinit__(out self, read other: Position):
+        self.idx = other.idx
+        self.line = other.line
+        self.column = other.column
+
+    fn __moveinit__(out self, deinit other: Position):
+        self.idx = other.idx
+        self.line = other.line
+        self.column = other.column
 
     fn __init__(out self, idx: Int, line: Int, column: Int):
         self.idx = idx
@@ -78,33 +109,35 @@ struct Position:
         if current_char == "\n":
             self.line += 1
             self.column = 0
-
-        return self
     
     fn copy(mut self) -> Position:
         """Create a copy of the current position."""
         return Position(self.idx, self.line, self.column)
+    
+    fn __str__(self) -> String:
+        """String representation of position."""
+        return "line " + String(self.line) + ", column " + String(self.column) + " (idx: " + String(self.idx) + ")"
 
 ################################
 ### LEXER FOR JARLANG LANGUAGE ###
 ################################
 
 struct Lexer:
-    var text: String     
-    var pos: Int            
-    var curr: String 
-    
+    var text: String
+    var pos: Position
+    var curr: String
+
     fn __init__(out self, text: String):
         self.text = text
-        self.pos = -1
+        self.pos = Position(-1, 0, -1)
         self.curr = ""
         self.advance()
     
     fn advance(mut self):
         """Advance the 'pos' pointer and set 'curr' character."""
-        self.pos += 1
-        if self.pos < len(self.text):
-            self.curr = String(self.text[self.pos])  # Convert StringSlice to String
+        self.pos.advance()
+        if self.pos.idx < len(self.text):
+            self.curr = String(self.text[self.pos.idx])  # Convert StringSlice to String
         else:
             self.curr = ""
 
@@ -202,18 +235,18 @@ struct Lexer:
                     self.advance()  # Skip the closing quote
                     tokens.append(Token(CONSTANTS.TT_STRING, str_val))
                 else:
-                    return List[Token](), IllegalCharError("Unterminated string literal at position " + String(self.pos) + ": " + str_val, "at position " + String(self.pos))
+                    return List[Token](), IllegalCharError("Unterminated string literal at position " + self.pos.__str__() + ": " + str_val, "at position " + self.pos.__str__())
 
             # Handle illegal characters
             elif self.curr != "":
                 char = self.curr
                 self.advance()
-                return List[Token](), IllegalCharError("Illegal character '" + char + "'" + " at position " + String(self.pos), "at position " + String(self.pos))
+                return List[Token](), IllegalCharError("Illegal character '" + char + "'" + " at position " + self.pos.__str__(), "at position " + self.pos.__str__())
 
             else:
                 char = self.curr
                 self.advance()
-                return List[Token](), IllegalCharError("Illegal character '" + char + "'" + String(self.pos), "at position " + String(self.pos))
+                return List[Token](), IllegalCharError("Illegal character '" + char + "'" + self.pos.__str__(), "at position " + self.pos.__str__())
 
 
         return tokens.copy(), None
@@ -265,7 +298,7 @@ fn test_lexer(text: String) -> String:
     # Test that lexer initializes properly
     var result = "Lexer initialized with text: '" + lexer.text + "'\n"
     result += "Current character: '" + lexer.curr + "'\n"
-    result += "Position: " + String(lexer.pos) + "\n"
+    result += "Position: " + lexer.pos.__str__() + "\n"
     
     # Test advance functionality
     result += "Advancing through characters of text:\n"
@@ -273,7 +306,7 @@ fn test_lexer(text: String) -> String:
     # Loop through the text length to ensure we cover all characters
     for _ in range(len(text) + 1):
         if lexer.curr != "":
-            result += "  Pos " + String(lexer.pos) + ": '" + lexer.curr + "'\n"
+            result += "  Pos " + lexer.pos.__str__() + ": '" + lexer.curr + "'\n"
             lexer.advance()
         else:
             result += "  Reached end of text\n"

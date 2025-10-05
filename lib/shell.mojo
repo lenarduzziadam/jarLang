@@ -46,7 +46,7 @@ fn shell_repl():
                                 var token = tokens[idx].copy()
                                 if idx > 0:
                                     token_str += "}, {"
-                                token_str += token.type + ":" + token.value
+                                token_str += token.type + ":" + "'" + token.value + "'"
                                 idx += 1
                             token_str += "}]"
                             print("Tokens:", token_str)
