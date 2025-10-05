@@ -1,0 +1,3 @@
+expr    : term ((commune|banish) term)*
+term    : factor ((rally|slash) factor)*
+factor  : int|float|(expr)
