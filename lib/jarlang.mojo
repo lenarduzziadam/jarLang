@@ -275,6 +275,71 @@ struct Lexer:
         else:
             return Token(CONSTANTS.TT_FLOAT, num_str)
 
+###################################
+### NODE FOR JARLANG (FUTURE) ###
+###################################
+
+struct NumberNode:
+    var token: Token
+
+    fn __init__(out self, token: Token):
+        self.token = token
+
+    fn __repr__(mut self) -> String:
+        return "NumberNode(" + self.token.__repr__() + ")"
+
+struct BinOpNode:
+    var left_node: NumberNode
+    var op_token: Token
+    var right_node: NumberNode
+
+    fn __init__(out self, left_node: NumberNode, op_token: Token, right_node: NumberNode):
+        self.left_node = left_node
+        self.op_token = op_token
+        self.right_node = right_node
+
+    fn __repr__(mut self) -> String:
+        return "BinOpNode(" + self.left_node.__repr__() + ", " + self.op_token.__repr__() + ", " + self.right_node.__repr__() + ")"
+    
+
+# struct UnaryOpNode:
+#     var op_token: Token
+#     var node: NumberNode
+
+#     fn __init__(out self, op_token: Token, node: NumberNode):
+#         self.op_token = op_token
+#         self.node = node
+
+#     fn __repr__(mut self) -> String:
+#         return "UnaryOpNode(" + self.op_token.__repr__() + ", " + self.node.__repr__() + ")"
+
+
+###################################
+###### PARSER FOR JARLANG (FUTURE) ######
+###################################
+
+struct Parser:
+    var tokens: List[Token]
+    var tok_idx: Int
+    var curr_tok: Optional[Token]
+
+    fn __init__(out self, tokens: List[Token]):
+        self.tokens = tokens
+        self.tok_idx = -1
+        self.advance()
+    
+    fn advance(mut self):
+        """Advance to the next token."""
+        self.tok_idx += 1
+        if self.tok_idx < len(self.tokens):
+            self.curr_tok = self.tokens[self.tok_idx].copy()
+        
+        return self.curr_tok
+
+    # Placeholder parse function for future implementation
+    fn parse(mut self) -> Optional[NumberNode]:
+        """Parse the list of tokens into an AST. (Placeholder)"""
+        return None
 
 ####################################
 ### RUNNER FOR JARLANG ###
