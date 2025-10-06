@@ -276,46 +276,49 @@ struct Lexer:
             return Token(CONSTANTS.TT_FLOAT, num_str)
 
 ###################################
-### NODE FOR JARLANG (FUTURE) ###
+### AST NODES FOR JARLANG ###
 ###################################
 
-struct NumberNode:
-    var token: Token
+struct NumberNode(Copyable, Movable):
+    var value: String
+
+    fn __copyinit__(out self, read other: NumberNode):
+        self.value = other.value
+
+    fn __moveinit__(out self, deinit other: NumberNode):
+        self.value = other.value
 
     fn __init__(out self, token: Token):
-        self.token = token
+        self.value = token.value
 
     fn __repr__(mut self) -> String:
-        return "NumberNode(" + self.token.__repr__() + ")"
+        return self.value 
 
-struct BinOpNode:
-    var left_node: NumberNode
+struct BinOpNode(Copyable, Movable):
+    var left: Optional[NumberNode]
     var op_token: Token
-    var right_node: NumberNode
+    var right: Optional[NumberNode]
 
-    fn __init__(out self, left_node: NumberNode, op_token: Token, right_node: NumberNode):
-        self.left_node = left_node
+    fn __copyinit__(out self, read other: BinOpNode):
+        self.left = other.left.copy()
+        self.op_token = other.op_token.copy()
+        self.right = other.right.copy()
+
+    fn __moveinit__(out self, deinit other: BinOpNode):
+        self.left = other.left.move()
+        self.op_token = other.op_token.move()
+        self.right = other.right.move()
+
+    fn __init__(out self, left: NumberNode, op_token: Token, right: NumberNode):
+        self.left = left.move()
         self.op_token = op_token
-        self.right_node = right_node
+        self.right = right.move()
 
     fn __repr__(mut self) -> String:
-        return "BinOpNode(" + self.left_node.__repr__() + ", " + self.op_token.__repr__() + ", " + self.right_node.__repr__() + ")"
-    
-
-# struct UnaryOpNode:
-#     var op_token: Token
-#     var node: NumberNode
-
-#     fn __init__(out self, op_token: Token, node: NumberNode):
-#         self.op_token = op_token
-#         self.node = node
-
-#     fn __repr__(mut self) -> String:
-#         return "UnaryOpNode(" + self.op_token.__repr__() + ", " + self.node.__repr__() + ")"
-
+        return "BinOpNode(" + self.left.__repr__() + ", " + self.op_token.__repr__() + ", " + self.right.__repr__() + ")"
 
 ###################################
-###### PARSER FOR JARLANG (FUTURE) ######
+###### PARSER FOR JARLANG ######
 ###################################
 
 struct Parser:
@@ -324,22 +327,47 @@ struct Parser:
     var curr_tok: Optional[Token]
 
     fn __init__(out self, tokens: List[Token]):
-        self.tokens = tokens
+        self.tokens = tokens.copy()
         self.tok_idx = -1
-        self.advance()
+        self.curr_tok = None
+        _ = self.advance()
     
-    fn advance(mut self):
+    fn advance(mut self) -> Optional[Token]:
         """Advance to the next token."""
         self.tok_idx += 1
         if self.tok_idx < len(self.tokens):
             self.curr_tok = self.tokens[self.tok_idx].copy()
-        
+        else:
+            self.curr_tok = None
         return self.curr_tok
 
-    # Placeholder parse function for future implementation
-    fn parse(mut self) -> Optional[NumberNode]:
-        """Parse the list of tokens into an AST. (Placeholder)"""
-        return None
+    fn expect_token(mut self, token_type: String) -> (Optional[Token], Optional[SyntaxError]):
+        """Expect a specific token type and advance if found."""
+        if self.curr_tok:
+            var tok = self.curr_tok.value().copy()
+            if tok.type == token_type:
+                self.advance()
+                return tok.copy(), None
+            else:
+                return None, SyntaxError("Expected '" + token_type + "' but got '" + tok.type + "'", "at token position " + String(self.tok_idx))
+        else:
+            return None, SyntaxError("Expected '" + token_type + "' but reached end of input", "at token position " + String(self.tok_idx))
+    
+    fn parse(mut self) -> (Optional[NumberNode], Optional[SyntaxError]):
+        """Parse the list of tokens into an AST."""
+        if self.curr_tok == None:
+            return None, SyntaxError("No tokens to parse", "at token position " + String(self.tok_idx))
+
+        # For simplicity, just parse a single number for now
+        if self.curr_tok and (self.curr_tok.value().type == CONSTANTS.TT_INT or self.curr_tok.value().type == CONSTANTS.TT_FLOAT):
+            var number_node = NumberNode(self.curr_tok.value().copy())
+            _ = self.advance()
+            return number_node.copy(), None
+        else:
+            return None, SyntaxError("Expected a number", "at token position " + String(self.tok_idx))
+    
+
+    
 
 ####################################
 ### RUNNER FOR JARLANG ###
@@ -351,6 +379,21 @@ fn run_lexer(filename: String, text: String) raises -> (List[Token], Optional[Il
     var tokens = result[0].copy()
     var error = result[1]
 
+    if error:
+        return List[Token](), error
+    
+    # Generate AST and check for parser errors
+    var parser = Parser(tokens)
+    var parse_result = parser.parse()
+    var ast = parse_result[0]
+    var parse_error = parse_result[1]
+    
+    if parse_error:
+        print("Parse Error:", parse_error.value().__repr__())
+    elif ast:
+        print("AST:", ast.value().__repr__())
+    else:
+        print("AST: No result")
     return tokens.copy(), error
 
 
