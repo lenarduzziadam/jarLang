@@ -360,7 +360,7 @@ struct Parser:
 
         # For simplicity, just parse a single number for now
         if self.curr_tok and (self.curr_tok.value().type == CONSTANTS.TT_INT or self.curr_tok.value().type == CONSTANTS.TT_FLOAT):
-            var number_node = NumberNode(self.curr_tok.value().copy())
+            var number_node = NumberNode(self.curr_tok.value())
             _ = self.advance()
             return number_node.copy(), None
         else:
