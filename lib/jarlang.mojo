@@ -515,6 +515,24 @@ fn run_lexer(filename: String, text: String) raises -> (List[Token], Optional[Il
         print("AST: No result")
     return tokens.copy(), error
 
+fn run_parser(filename: String, text: String) raises -> (Optional[ASTNode], Optional[IllegalCharError], Optional[SyntaxError]):
+    """Parse text and return the AST along with any errors."""
+    var lexer = Lexer(filename, text)
+    var lex_result = lexer.generate_tokens()
+    var tokens = lex_result[0].copy()
+    var lex_error = lex_result[1]
+
+    if lex_error:
+        return None, lex_error, None
+    
+    # Generate AST and check for parser errors
+    var parser = Parser(tokens)
+    var parse_result = parser.parse()
+    var ast = parse_result[0]
+    var parse_error = parse_result[1]
+    
+    return ast, None, parse_error
+
 
 ####################################
 ### SIMPLE TEST FUNCTION ###
