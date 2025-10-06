@@ -248,9 +248,9 @@ struct Lexer:
             else:
                 char = self.curr
                 self.advance()
-                return List[Token](), IllegalCharError("Illegal character '" + char + "'" + self.pos.__str__(), "at position " + self.pos.__str__())
+                return List[Token](), IllegalCharError("Illegal character '" + char + "'" + " at position " + self.pos.__str__(), "at position " + self.pos.__str__())
 
-
+        tokens.append(Token(CONSTANTS.TT_EOF))
         return tokens.copy(), None
 
     fn make_number(mut self) -> Token:
@@ -317,6 +317,9 @@ struct BinOpNode(Copyable, Movable):
     fn __repr__(mut self) -> String:
         return " {" + self.left.__repr__() + "}(" + self.op_token.__repr__() + "){" + self.right.__repr__() + "}"
 
+    
+
+
 # Simple AST variant type to hold either NumberNode or BinOpNode
 struct ASTNode(Copyable, Movable):
     var node_type: String  # "number" or "binop"
@@ -350,6 +353,36 @@ struct ASTNode(Copyable, Movable):
             return self.binop_node.value().__repr__()
         else:
             return "ASTNode(invalid)"
+
+    fn evaluate(self) raises -> Float64:
+        """Evaluate the AST node and return the numeric result."""
+        if self.node_type == "number" and self.number_node:
+            # Convert string to Float64
+            return atof(self.number_node.value().value)
+        elif self.node_type == "binop" and self.binop_node:
+            var binop = self.binop_node.value().copy()
+            var left_val = atof(binop.left.value)
+            var right_val = atof(binop.right.value)
+
+            # Apply the operator
+            if binop.op_token.type == CONSTANTS.TT_PLUS:
+                return left_val + right_val
+            elif binop.op_token.type == CONSTANTS.TT_MINUS:
+                return left_val - right_val
+            elif binop.op_token.type == CONSTANTS.TT_MUL:
+                return left_val * right_val
+            elif binop.op_token.type == CONSTANTS.TT_DIV:
+                if right_val != 0:
+                    return left_val / right_val
+                else:
+                    # Division by zero - raise an error
+                    raise Error("Division by zero")
+            else:
+                # Unknown operator
+                raise Error("Unknown operator: " + binop.op_token.type)
+        else:
+            # Invalid node
+            raise Error("Invalid AST node")
 
 ###################################
 ###### PARSER FOR JARLANG ######
@@ -429,6 +462,7 @@ struct Parser:
 
     fn term(mut self) -> (Optional[ASTNode], Optional[SyntaxError]):
         """Parse term: factor ((rally|slash) factor)*"""
+        
         var result = self.factor()
         var left_node = result[0]
         var error = result[1]
@@ -485,7 +519,34 @@ struct Parser:
         else:
             return None, SyntaxError("Expected int, float or '('", "at token position " + String(self.tok_idx))
     
+struct ParserResult:
+    var node: Optional[ASTNode]
+    var error: Optional[SyntaxError]
 
+    fn __init__(out self, node: Optional[ASTNode] = None, error: Optional[SyntaxError] = None):
+        self.node = node
+        self.error = error
+
+    fn register(self, res: ParserResult) -> (Optional[ASTNode], Optional[SyntaxError]):
+        if res.error:
+            self.error = res.error.value().copy()
+        return res.node.copy(), res.error
+    
+    fn success(mut self, node: ASTNode) -> ParserResult:
+        self.node = node.copy()
+        return self
+    
+    fn failure(mut self, error: SyntaxError) -> ParserResult:
+        self.error = error.value().copy()
+        return self
+
+    fn __repr__(out self) -> String:
+        if self.error:
+            return "ParserResult(error: " + self.error.value().__repr__() + ")"
+        elif self.node:
+            return "ParserResult(node: " + self.node.value().__repr__() + ")"
+        else:
+            return "ParserResult(empty)"
     
 
 ####################################
@@ -501,18 +562,6 @@ fn run_lexer(filename: String, text: String) raises -> (List[Token], Optional[Il
     if error:
         return List[Token](), error
     
-    # Generate AST and check for parser errors
-    var parser = Parser(tokens)
-    var parse_result = parser.parse()
-    var ast = parse_result[0]
-    var parse_error = parse_result[1]
-    
-    if parse_error:
-        print("Parse Error:", parse_error.value().__repr__())
-    elif ast:
-        print("AST:", ast.value().__repr__())
-    else:
-        print("AST: No result")
     return tokens.copy(), error
 
 fn run_parser(filename: String, text: String) raises -> (Optional[ASTNode], Optional[IllegalCharError], Optional[SyntaxError]):
@@ -530,6 +579,8 @@ fn run_parser(filename: String, text: String) raises -> (Optional[ASTNode], Opti
     var parse_result = parser.parse()
     var ast = parse_result[0]
     var parse_error = parse_result[1]
+
+    
     
     return ast, None, parse_error
 

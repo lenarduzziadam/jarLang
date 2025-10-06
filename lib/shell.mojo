@@ -41,6 +41,7 @@ fn shell_repl():
                         print("JarKnight Confused:", parse_error.value().message)
                     elif ast:
                         print("AST:", ast.value().__repr__())
+                        print("JarKnight: =", ast.value().evaluate())  # This will show the calculated answer!
                         print("JarKnight: Parsed successfully!")
                     else:
                         print("JarKnight: No AST generated")
