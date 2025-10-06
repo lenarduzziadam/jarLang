@@ -295,9 +295,9 @@ struct NumberNode(Copyable, Movable):
         return self.value 
 
 struct BinOpNode(Copyable, Movable):
-    var left: Optional[NumberNode]
+    var left: NumberNode
     var op_token: Token
-    var right: Optional[NumberNode]
+    var right: NumberNode
 
     fn __copyinit__(out self, read other: BinOpNode):
         self.left = other.left.copy()
@@ -305,17 +305,51 @@ struct BinOpNode(Copyable, Movable):
         self.right = other.right.copy()
 
     fn __moveinit__(out self, deinit other: BinOpNode):
-        self.left = other.left.move()
-        self.op_token = other.op_token.move()
-        self.right = other.right.move()
+        self.left = other.left.copy()
+        self.op_token = other.op_token.copy()
+        self.right = other.right.copy()
 
     fn __init__(out self, left: NumberNode, op_token: Token, right: NumberNode):
-        self.left = left.move()
-        self.op_token = op_token
-        self.right = right.move()
+        self.left = left.copy()
+        self.op_token = op_token.copy()
+        self.right = right.copy()
 
     fn __repr__(mut self) -> String:
-        return "BinOpNode(" + self.left.__repr__() + ", " + self.op_token.__repr__() + ", " + self.right.__repr__() + ")"
+        return " {" + self.left.__repr__() + "}(" + self.op_token.__repr__() + "){" + self.right.__repr__() + "}"
+
+# Simple AST variant type to hold either NumberNode or BinOpNode
+struct ASTNode(Copyable, Movable):
+    var node_type: String  # "number" or "binop"
+    var number_node: Optional[NumberNode]
+    var binop_node: Optional[BinOpNode]
+
+    fn __copyinit__(out self, read other: ASTNode):
+        self.node_type = other.node_type
+        self.number_node = other.number_node
+        self.binop_node = other.binop_node
+
+    fn __moveinit__(out self, deinit other: ASTNode):
+        self.node_type = other.node_type
+        self.number_node = other.number_node
+        self.binop_node = other.binop_node
+
+    fn __init__(out self, number: NumberNode):
+        self.node_type = "number"
+        self.number_node = number.copy()
+        self.binop_node = None
+
+    fn __init__(out self, binop: BinOpNode):
+        self.node_type = "binop" 
+        self.number_node = None
+        self.binop_node = binop.copy()
+
+    fn __repr__(mut self) -> String:
+        if self.node_type == "number" and self.number_node:
+            return self.number_node.value().__repr__()
+        elif self.node_type == "binop" and self.binop_node:
+            return self.binop_node.value().__repr__()
+        else:
+            return "ASTNode(invalid)"
 
 ###################################
 ###### PARSER FOR JARLANG ######
@@ -353,18 +387,103 @@ struct Parser:
         else:
             return None, SyntaxError("Expected '" + token_type + "' but reached end of input", "at token position " + String(self.tok_idx))
     
-    fn parse(mut self) -> (Optional[NumberNode], Optional[SyntaxError]):
+    fn parse(mut self) -> (Optional[ASTNode], Optional[SyntaxError]):
         """Parse the list of tokens into an AST."""
         if self.curr_tok == None:
             return None, SyntaxError("No tokens to parse", "at token position " + String(self.tok_idx))
 
-        # For simplicity, just parse a single number for now
-        if self.curr_tok and (self.curr_tok.value().type == CONSTANTS.TT_INT or self.curr_tok.value().type == CONSTANTS.TT_FLOAT):
-            var number_node = NumberNode(self.curr_tok.value())
+        return self.expr()
+
+    fn expr(mut self) -> (Optional[ASTNode], Optional[SyntaxError]):
+        """Parse expression: term ((commune|banish) term)*"""
+        var result = self.term()
+        var left_node = result[0]
+        var error = result[1]
+        
+        if error:
+            return None, error.value().copy()
+        
+        # Handle binary operations (+ and -)
+        while self.curr_tok and (self.curr_tok.value().type == CONSTANTS.TT_PLUS or self.curr_tok.value().type == CONSTANTS.TT_MINUS):
+            var op_token = self.curr_tok.value().copy()
             _ = self.advance()
-            return number_node.copy(), None
+            
+            var right_result = self.term()
+            var right_node = right_result[0]
+            var right_error = right_result[1]
+            
+            if right_error:
+                return None, right_error.value().copy()
+            
+            if left_node and right_node:
+                # Extract NumberNodes from ASTNodes (simplified - only handling number leaves for now)
+                if left_node.value().node_type == "number" and right_node.value().node_type == "number":
+                    var left_num = left_node.value().number_node.value().copy()
+                    var right_num = right_node.value().number_node.value().copy()
+                    var binop = BinOpNode(left_num, op_token, right_num)
+                    left_node = ASTNode(binop)
+                else:
+                    return None, SyntaxError("Complex expressions not yet supported", "at token position " + String(self.tok_idx))
+            
+        return left_node, None
+
+    fn term(mut self) -> (Optional[ASTNode], Optional[SyntaxError]):
+        """Parse term: factor ((rally|slash) factor)*"""
+        var result = self.factor()
+        var left_node = result[0]
+        var error = result[1]
+        
+        if error:
+            return None, error.value().copy()
+        
+        # Handle binary operations (* and /)
+        while self.curr_tok and (self.curr_tok.value().type == CONSTANTS.TT_MUL or self.curr_tok.value().type == CONSTANTS.TT_DIV):
+            var op_token = self.curr_tok.value().copy()
+            _ = self.advance()
+            
+            var right_result = self.factor()
+            var right_node = right_result[0]
+            var right_error = right_result[1]
+            
+            if right_error:
+                return None, right_error.value().copy()
+            
+            if left_node and right_node:
+                # Extract NumberNodes from ASTNodes (simplified - only handling number leaves for now)
+                if left_node.value().node_type == "number" and right_node.value().node_type == "number":
+                    var left_num = left_node.value().number_node.value().copy()
+                    var right_num = right_node.value().number_node.value().copy()
+                    var binop = BinOpNode(left_num, op_token, right_num)
+                    left_node = ASTNode(binop)
+                else:
+                    return None, SyntaxError("Complex expressions not yet supported", "at token position " + String(self.tok_idx))
+            
+        return left_node, None
+
+    fn factor(mut self) -> (Optional[ASTNode], Optional[SyntaxError]):
+        """Parse factor: int|float|(expr)"""
+        var tok = self.curr_tok
+        
+        if tok and (tok.value().type == CONSTANTS.TT_INT or tok.value().type == CONSTANTS.TT_FLOAT):
+            _ = self.advance()
+            var number_node = NumberNode(tok.value())
+            return ASTNode(number_node), None
+        elif tok and tok.value().type == CONSTANTS.TT_LPAREN:
+            _ = self.advance()
+            var result = self.expr()
+            var node = result[0]
+            var error = result[1]
+            
+            if error:
+                return None, error.value().copy()
+            
+            if self.curr_tok and self.curr_tok.value().type == CONSTANTS.TT_RPAREN:
+                _ = self.advance()
+                return node, None
+            else:
+                return None, SyntaxError("Expected ')')", "at token position " + String(self.tok_idx))
         else:
-            return None, SyntaxError("Expected a number", "at token position " + String(self.tok_idx))
+            return None, SyntaxError("Expected int, float or '('", "at token position " + String(self.tok_idx))
     
 
     
