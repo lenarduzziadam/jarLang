@@ -558,6 +558,33 @@ struct ParserResult:
             return "ParserResult(empty)"
     
 
+
+###################################
+##### Interpreter for JARLANG #####
+###################################
+struct Interpreter:
+    var node: ASTNode
+
+    fn __init__(out self, node: ASTNode):
+        self.node = node.copy()
+
+    fn visit(mut self, node: ASTNode) raises -> Float64:
+        """Visit the AST node and evaluate it."""
+        method_name = "visit_" + node.node_type
+
+        method = getattr(self, method_name, None)
+        if method:
+            return method(node)
+        else:
+            raise Error("No visit method for node type: " + node.node_type)
+    
+    fn visit_number(mut self, node: ASTNode) raises -> Float64:
+        """Visit a number node and return its value."""
+        if node.node_type == "number" and node.number_node:
+            return atof(node.number_node.value().value)
+        else:
+            raise Error("Invalid number node")
+
 ####################################
 ### RUNNER FOR JARLANG ###
 ####################################
@@ -593,6 +620,12 @@ fn run_parser(filename: String, text: String) raises -> (Optional[ASTNode], Opti
     
     return ast, None, parse_error
 
+
+#### INTERPRETER FOR JARLANG
+fn run_interpreter(ast: ASTNode) raises -> Float64:
+    """Interpret the AST and return the evaluated result."""
+    var interpreter = Interpreter(ast)
+    return interpreter.visit(ast)
 
 ####################################
 ### SIMPLE TEST FUNCTION ###
