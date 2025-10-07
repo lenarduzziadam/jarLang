@@ -21,24 +21,36 @@ fn shell_repl():
                 print("Jarlang Commands:")
                 print("  q! - quit")
                 print("  !test - run built-in tests")
+                print("  !tokens - toggle token display mode")
                 print("  !help - show this help")
-                print("  <expr> - directly tokenize expression")
+                print("  <expr> - parse and show AST of expression")
             
-            ## Default case: just echo input for now
+            ## Default case: parse the input and show AST
             else:
-                # Test the lexer with the input
-                var lexer = Lexer(text)
-                var result = lexer.generate_tokens()
-                var tokens = result[0].copy()
-                var error = result[1]
-
-                # Check for errors first
-                if error:
-                    print("JarKnight Ashamed:", error.value().message)
-                else:
-                    if len(tokens) == 0:
-                        print("No tokens found")
+                try:
+                    # Parse the input and show AST
+                    var result = run_parser("<stdin>", text)
+                    var ast = result[0]
+                    var lex_error = result[1]
+                    var parse_error = result[2]
+                    
+                    # Check for errors first
+                    if lex_error:
+                        print("JarKnight Ashamed:", lex_error.value().message)
+                    elif parse_error:
+                        print("JarKnight Confused:", parse_error.value().message)
+                    elif ast:
+                        print("AST:", ast.value().__repr__())
+                        var interp_result = run_interpreter(ast.value())
+                        print("JarTerpreted:", interp_result)
                     else:
+                        print("JarKnight: No AST generated")
+
+                    # Also show tokens for debugging
+                    var token_result = run_lexer("<stdin>", text)
+                    var tokens = token_result[0].copy()
+                    var token_error = token_result[1]
+                    if not token_error and len(tokens) > 0:
                         print("Found", len(tokens), "tokens")
                         var token_str = "[{"
                         var idx = 0
@@ -50,9 +62,9 @@ fn shell_repl():
                             idx += 1
                         token_str += "}]"
                         print("Tokens:", token_str)
-
-                        # Print the original input for now as a placeholder
-                        print("JarKnight:", text)
+                        
+                except:
+                    print("JarKnight Ashamed: Parser crashed")
                 
                     
         except:
