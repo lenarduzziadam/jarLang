@@ -33,7 +33,7 @@ fn shell_repl():
                     var ast = result[0]
                     var lex_error = result[1]
                     var parse_error = result[2]
-
+                    
                     # Check for errors first
                     if lex_error:
                         print("JarKnight Ashamed:", lex_error.value().message)
@@ -41,8 +41,8 @@ fn shell_repl():
                         print("JarKnight Confused:", parse_error.value().message)
                     elif ast:
                         print("AST:", ast.value().__repr__())
-                        print("JarKnight: =", ast.value().evaluate())  # This will show the calculated answer!
-                        print("JarKnight: Parsed successfully!")
+                        var interp_result = run_interpreter(ast.value())
+                        print("JarTerpreted:", interp_result)
                     else:
                         print("JarKnight: No AST generated")
 

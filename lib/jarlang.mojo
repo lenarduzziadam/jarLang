@@ -570,11 +570,14 @@ struct Interpreter:
 
     fn visit(mut self, node: ASTNode) raises -> Float64:
         """Visit the AST node and evaluate it."""
-        method_name = "visit_" + node.node_type
-
-        method = getattr(self, method_name, None)
-        if method:
-            return method(node)
+        var node_type = node.node_type
+        
+        if node_type == "number":
+            return self.visit_number(node)
+        elif node_type == "binop":
+            return self.visit_binop(node)
+        elif node_type == "unary":  # If you add unary later
+            return self.visit_unary(node)
         else:
             raise Error("No visit method for node type: " + node.node_type)
     
@@ -584,6 +587,37 @@ struct Interpreter:
             return atof(node.number_node.value().value)
         else:
             raise Error("Invalid number node")
+
+    fn visit_binop(mut self, node: ASTNode) raises -> Float64:
+        """Visit a binary operation node and evaluate it."""
+        if node.node_type == "binop" and node.binop_node:
+            var binop = node.binop_node.value().copy()
+            # Access the value field directly (not as a method)
+            var left_val = atof(binop.left.value)
+            var right_val = atof(binop.right.value)
+            # Apply the operator
+            if binop.op_token.type == CONSTANTS.TT_PLUS:
+                return left_val + right_val
+            elif binop.op_token.type == CONSTANTS.TT_MINUS:
+                return left_val - right_val
+            elif binop.op_token.type == CONSTANTS.TT_MUL:
+                return left_val * right_val
+            elif binop.op_token.type == CONSTANTS.TT_DIV:
+                if right_val != 0:
+                    return left_val / right_val
+                else:
+                    # Division by zero - raise an error
+                    raise Error("Division by zero")
+            else:
+                # Unknown operator
+                raise Error("Unknown operator: " + binop.op_token.type)
+        else:
+            raise Error("Invalid binary operation node")
+
+    fn visit_unary(mut self, node: ASTNode) raises -> Float64:
+        """Visit a unary operation node and evaluate it."""
+        # Implement unary operation handling if needed
+        raise Error("Unary operations not yet implemented") 
 
 ####################################
 ### RUNNER FOR JARLANG ###
