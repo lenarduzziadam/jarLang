@@ -71,8 +71,8 @@ struct Token(Copyable, Movable):
     fn __moveinit__(out self, deinit other: Token):
         self.type = other.type
         self.value = other.value
-        self.pos_start = other.pos_start  # Add this
-        self.pos_end = other.pos_end      # Add this
+        self.pos_start = other.pos_start
+        self.pos_end = other.pos_end
 
     fn __init__(out self, type_: String, value: String = ""):
         self.type = type_
@@ -317,7 +317,7 @@ struct BinOpNode(Copyable, Movable):
         self.op_token = other.op_token.copy()
         self.right = other.right.copy()
 
-    fn __init__(out self, left: ASTNode, op_token: Token, right: ASTNode):
+    fn __init__(out self, left: NumberNode, op_token: Token, right: NumberNode):
         self.left = left.copy()
         self.op_token = op_token.copy()
         self.right = right.copy()
@@ -369,8 +369,9 @@ struct ASTNode(Copyable, Movable):
             return atof(self.number_node.value().value)
         elif self.node_type == "binop" and self.binop_node:
             var binop = self.binop_node.value().copy()
-            var left_val = atof(binop.left.value())
-            var right_val = atof(binop.right.value())
+            # Access the value field directly (not as a method)
+            var left_val = atof(binop.left.value)
+            var right_val = atof(binop.right.value)
 
             # Apply the operator
             if binop.op_token.type == CONSTANTS.TT_PLUS:
@@ -470,6 +471,7 @@ struct Parser:
 
     fn term(mut self) -> (Optional[ASTNode], Optional[SyntaxError]):
         """Parse term: factor ((rally|slash) factor)*"""
+        
         var result = self.factor()
         var left_node = result[0]
         var error = result[1]
@@ -503,7 +505,6 @@ struct Parser:
 
     fn factor(mut self) -> (Optional[ASTNode], Optional[SyntaxError]):
         """Parse factor: int|float|(expr)"""
-    
         var tok = self.curr_tok
         
         if tok and (tok.value().type == CONSTANTS.TT_INT or tok.value().type == CONSTANTS.TT_FLOAT):
@@ -535,7 +536,7 @@ struct ParserResult:
         self.node = node
         self.error = error
 
-    fn register(mut self, res: ParserResult) -> (Optional[ASTNode], Optional[SyntaxError]):
+    fn register(self, res: ParserResult) -> (Optional[ASTNode], Optional[SyntaxError]):
         if res.error:
             self.error = res.error.value().copy()
         return res.node.copy(), res.error
@@ -545,7 +546,7 @@ struct ParserResult:
         return self
     
     fn failure(mut self, error: SyntaxError) -> ParserResult:
-        self.error = error.copy()
+        self.error = error.value().copy()
         return self
 
     fn __repr__(out self) -> String:
@@ -571,10 +572,6 @@ fn run_lexer(filename: String, text: String) raises -> (List[Token], Optional[Il
         return List[Token](), error
     
     return tokens.copy(), error
-
-################################
-### RUNNER FOR PARSER ###
-################################
 
 fn run_parser(filename: String, text: String) raises -> (Optional[ASTNode], Optional[IllegalCharError], Optional[SyntaxError]):
     """Parse text and return the AST along with any errors."""
