@@ -362,37 +362,6 @@ struct ASTNode(Copyable, Movable):
         else:
             return "ASTNode(invalid)"
 
-    fn evaluate(self) raises -> Float64:
-        """Evaluate the AST node and return the numeric result."""
-        if self.node_type == "number" and self.number_node:
-            # Convert string to Float64
-            return atof(self.number_node.value().value)
-        elif self.node_type == "binop" and self.binop_node:
-            var binop = self.binop_node.value().copy()
-            # Access the value field directly (not as a method)
-            var left_val = atof(binop.left.value)
-            var right_val = atof(binop.right.value)
-
-            # Apply the operator
-            if binop.op_token.type == CONSTANTS.TT_PLUS:
-                return left_val + right_val
-            elif binop.op_token.type == CONSTANTS.TT_MINUS:
-                return left_val - right_val
-            elif binop.op_token.type == CONSTANTS.TT_MUL:
-                return left_val * right_val
-            elif binop.op_token.type == CONSTANTS.TT_DIV:
-                if right_val != 0:
-                    return left_val / right_val
-                else:
-                    # Division by zero - raise an error
-                    raise Error("Division by zero")
-            else:
-                # Unknown operator
-                raise Error("Unknown operator: " + binop.op_token.type)
-        else:
-            # Invalid node
-            raise Error("Invalid AST node")
-
 ###################################
 ###### PARSER FOR JARLANG ######
 ###################################
