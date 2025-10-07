@@ -317,7 +317,7 @@ struct BinOpNode(Copyable, Movable):
         self.op_token = other.op_token.copy()
         self.right = other.right.copy()
 
-    fn __init__(out self, left: NumberNode, op_token: Token, right: NumberNode):
+    fn __init__(out self, left: ASTNode, op_token: Token, right: ASTNode):
         self.left = left.copy()
         self.op_token = op_token.copy()
         self.right = right.copy()
@@ -369,8 +369,8 @@ struct ASTNode(Copyable, Movable):
             return atof(self.number_node.value().value)
         elif self.node_type == "binop" and self.binop_node:
             var binop = self.binop_node.value().copy()
-            var left_val = atof(binop.left.value)
-            var right_val = atof(binop.right.value)
+            var left_val = atof(binop.left.value())
+            var right_val = atof(binop.right.value())
 
             # Apply the operator
             if binop.op_token.type == CONSTANTS.TT_PLUS:
