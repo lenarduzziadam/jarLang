@@ -59,10 +59,14 @@ struct SyntaxError(Copyable, Movable):
 struct Token(Copyable, Movable):
     var type: String
     var value: String
+    var pos_start: Optional[Position]  # Optional position tracking
+    var pos_end: Optional[Position]    # Optional position tracking
 
     fn __copyinit__(out self, read other: Token):
         self.type = other.type
         self.value = other.value
+        self.pos_start = other.pos_start
+        self.pos_end = other.pos_end
 
     fn __moveinit__(out self, deinit other: Token):
         self.type = other.type
