@@ -750,17 +750,18 @@ class NumberNode extends ASTNode {
  * BINOPNODE - Represents binary operations in the AST
  * 
  * Binary operations are expressions with two operands and one operator,
- * such as addition, subtraction, multiplication, and division.
+ * such as addition, subtraction, multiplication, division, and exponentiation.
  * 
  * Examples in Jarlang:
  * - "3 + 5" becomes BinOpNode(NumberNode("3"), Token("+"), NumberNode("5"))
- * - "a * b" becomes BinOpNode(VarNode("a"), Token("*"), VarNode("b"))  [future]
+ * - "2 + 3 * 4" becomes BinOpNode(NumberNode("2"), Token("+"), BinOpNode(...))
+ * - "10 ^ 3" becomes BinOpNode(NumberNode("10"), Token("^"), NumberNode("3"))
  * 
  * TREE STRUCTURE:
  * Each BinOpNode has exactly three components:
- * - left: Left operand (another AST node)
- * - opToken: The operator token (commune, banish, rally, slash, etc.)
- * - right: Right operand (another AST node)
+ * - left: Left operand (any AST node - NumberNode, BinOpNode, etc.)
+ * - opToken: The operator token (commune, banish, rally, slash, ascend, etc.)
+ * - right: Right operand (any AST node - NumberNode, BinOpNode, etc.)
  * 
  * This creates a recursive tree structure where complex expressions
  * become trees of BinOpNodes with NumberNodes at the leaves.
@@ -776,31 +777,30 @@ class NumberNode extends ASTNode {
  * because the parser builds the tree with correct precedence.
  */
 class BinOpNode extends ASTNode {
-    private NumberNode left;      // Left operand (currently restricted to numbers)
-    private Token opToken;        // Operator token (commune, banish, rally, slash, etc.)
-    private NumberNode right;     // Right operand (currently restricted to numbers)
+    private ASTNode left;         // Left operand (any AST node for full expression support)
+    private Token opToken;        // Operator token (commune, banish, rally, slash, ascend, etc.)
+    private ASTNode right;        // Right operand (any AST node for full expression support)
     
     /**
      * Constructor creates a binary operation node
      * 
-     * NOTE: Currently restricted to NumberNode operands to match the
-     * simple parser implementation. Future versions could accept any ASTNode
-     * to support nested expressions like ((3 + 4) * (5 - 2)).
+     * Now supports any ASTNode types for both operands, enabling
+     * complex nested expressions like ((3 + 4) * (5 - 2)) and 10^(2+3).
      * 
-     * @param left Left operand (must be NumberNode for now)
+     * @param left Left operand (can be any ASTNode)
      * @param opToken Operator token with warrior-themed type
-     * @param right Right operand (must be NumberNode for now)
+     * @param right Right operand (can be any ASTNode)
      */
-    public BinOpNode(NumberNode left, Token opToken, NumberNode right) {
+    public BinOpNode(ASTNode left, Token opToken, ASTNode right) {
         this.left = left;
         this.opToken = opToken;
         this.right = right;
     }
     
     // Getter methods for accessing components
-    public NumberNode getLeft() { return left; }
+    public ASTNode getLeft() { return left; }
     public Token getOpToken() { return opToken; }
-    public NumberNode getRight() { return right; }
+    public ASTNode getRight() { return right; }
     
     /**
      * Evaluate this binary operation
@@ -813,13 +813,14 @@ class BinOpNode extends ASTNode {
      * - "banish" (TT_MINUS) → subtraction (-)
      * - "rally" (TT_MUL) → multiplication (*)
      * - "slash" (TT_DIV) → division (/)
+     * - "ascend" (TT_POW) → exponentiation (^)
      * 
      * @return Result of applying the operation to left and right operands
      * @throws InterpreterError for runtime errors (division by zero, unknown operators)
      */
     @Override
     public double evaluate() throws InterpreterError {
-        // Recursively evaluate both operands
+        // Recursively evaluate both operands (now works with any ASTNode)
         double leftVal = left.evaluate();
         double rightVal = right.evaluate();
         
@@ -839,6 +840,8 @@ class BinOpNode extends ASTNode {
                 // Division by zero is a runtime error
                 throw new InterpreterError("Division by zero");
             }
+        } else if (CONSTANTS.TT_POW.equals(opType)) {     // "ascend" - NEW!
+            return Math.pow(leftVal, rightVal);
         } else {
             // Unknown operator - should never happen if parser is correct
             throw new InterpreterError("Unknown operator: " + opType);
@@ -877,16 +880,18 @@ class BinOpNode extends ASTNode {
  * This parser uses recursive descent, where each grammar rule becomes a method.
  * The methods call each other recursively to build the syntax tree.
  * 
- * JARLANG GRAMMAR (simplified):
+ * JARLANG GRAMMAR (with exponentiation support):
  * expression → term ((commune | banish) term)*
- * term       → factor ((rally | slash) factor)*  
+ * term       → power ((rally | slash) power)*  
+ * power      → factor (ascend factor)*     [NEW: exponentiation level]
  * factor     → number | gather expression disperse
  * number     → INT | FLOAT
  * 
  * OPERATOR PRECEDENCE (handled by grammar structure):
  * 1. Parentheses: gather (...) disperse  [highest precedence]
- * 2. Multiplication/Division: rally (*), slash (/)
- * 3. Addition/Subtraction: commune (+), banish (-)  [lowest precedence]
+ * 2. Exponentiation: ascend (^)
+ * 3. Multiplication/Division: rally (*), slash (/)
+ * 4. Addition/Subtraction: commune (+), banish (-)  [lowest precedence]
  * 
  * RECURSIVE DESCENT ADVANTAGES:
  * - Easy to understand and implement
@@ -895,13 +900,16 @@ class BinOpNode extends ASTNode {
  * - Good error reporting capabilities
  * - Easily extensible for new language features
  * 
- * CURRENT LIMITATIONS:
- * - Only supports simple binary operations with numbers
- * - No support for nested binary operations yet
- * - No variables, functions, or complex expressions
+ * CURRENT FEATURES:
+ * - Full binary operations with proper precedence
+ * - Exponentiation support (^ / "ascend")
+ * - Nested expressions and parentheses
+ * - Complex expression trees
  * 
- * These limitations are temporary and can be lifted by enhancing
- * the AST node types and parser methods.
+ * FUTURE ENHANCEMENTS:
+ * - Variables, functions, and control flow
+ * - Unary operators (-, +)
+ * - Multiple expression statements
  */
 class JarlangParser {
     private List<Token> tokens;    // Complete list of tokens from lexer
@@ -963,6 +971,7 @@ class JarlangParser {
      * - "3 + 5" → BinOpNode(3, +, 5)
      * - "3 + 5 - 2" → BinOpNode(BinOpNode(3, +, 5), -, 2)
      * - "3 * 5 + 2" → BinOpNode(BinOpNode(3, *, 5), +, 2)
+     * - "2 + 3 * 4" → BinOpNode(2, +, BinOpNode(3, *, 4))
      * 
      * The left-associative parsing ensures that "a + b + c" is parsed as
      * "(a + b) + c" rather than "a + (b + c)".
@@ -983,14 +992,8 @@ class JarlangParser {
             
             ASTNode rightNode = term();    // Parse right operand
             
-            // CURRENT LIMITATION: Only handle simple number operations
-            // Future enhancement: Support arbitrary ASTNode types
-            if (leftNode instanceof NumberNode && rightNode instanceof NumberNode) {
-                leftNode = new BinOpNode((NumberNode) leftNode, opToken, (NumberNode) rightNode);
-            } else {
-                throw new SyntaxError("Complex expressions not yet supported", 
-                                    "at token position " + tokIdx);
-            }
+            // Create binary operation node (now supports any ASTNode types)
+            leftNode = new BinOpNode(leftNode, opToken, rightNode);
         }
         
         return leftNode;
@@ -998,22 +1001,23 @@ class JarlangParser {
     
     /**
      * TERM PARSING - Middle level of operator precedence  
-     * Grammar rule: term → factor ((rally | slash) factor)*
+     * Grammar rule: term → power ((rally | slash) power)*
      * 
      * This method handles multiplication and division, which have higher
-     * precedence than addition and subtraction. Like expr(), it maintains
-     * left-associativity.
+     * precedence than addition and subtraction but lower than exponentiation.
+     * Like expr(), it maintains left-associativity.
      * 
      * Examples:
      * - "3 * 5" → BinOpNode(3, *, 5)
      * - "12 / 3 / 2" → BinOpNode(BinOpNode(12, /, 3), /, 2) = 2
      * - "3 + 4 * 5" → handled by expr() calling term() for "4 * 5"
+     * - "2 ^ 3 * 4" → BinOpNode(BinOpNode(2, ^, 3), *, 4) = 32
      * 
      * @return AST node representing the parsed term
      * @throws SyntaxError if term is malformed
      */
     private ASTNode term() throws SyntaxError {
-        ASTNode leftNode = factor();  // Start with highest-precedence factor
+        ASTNode leftNode = power();  // Start with higher-precedence power
         
         // Handle zero or more multiplication/division operations
         while (currentToken != null && 
@@ -1023,15 +1027,50 @@ class JarlangParser {
             Token opToken = currentToken;  // Save the operator
             advance();                     // Move past operator
             
-            ASTNode rightNode = factor();  // Parse right operand
+            ASTNode rightNode = power();   // Parse right operand (now calls power())
             
-            // CURRENT LIMITATION: Only handle simple number operations
-            if (leftNode instanceof NumberNode && rightNode instanceof NumberNode) {
-                leftNode = new BinOpNode((NumberNode) leftNode, opToken, (NumberNode) rightNode);
-            } else {
-                throw new SyntaxError("Complex expressions not yet supported", 
-                                    "at token position " + tokIdx);
-            }
+            // Create binary operation node (now supports any ASTNode types)
+            leftNode = new BinOpNode(leftNode, opToken, rightNode);
+        }
+        
+        return leftNode;
+    }
+    
+    /**
+     * POWER PARSING - High precedence level for exponentiation
+     * Grammar rule: power → factor (ascend factor)*
+     * 
+     * This method handles exponentiation, which has higher precedence
+     * than multiplication and division. Unlike other operators,
+     * exponentiation is RIGHT-associative, meaning "2^3^4" should be
+     * parsed as "2^(3^4)" not "(2^3)^4".
+     * 
+     * Examples:
+     * - "2 ^ 3" → BinOpNode(2, ^, 3) = 8
+     * - "10 ^ 10" → BinOpNode(10, ^, 10) = 10000000000
+     * - "2 ^ 3 ^ 2" → BinOpNode(2, ^, BinOpNode(3, ^, 2)) = 2^9 = 512
+     * - "(2 + 3) ^ 4" → BinOpNode(BinOpNode(2, +, 3), ^, 4) = 625
+     * 
+     * NOTE: Right-associativity means we parse differently than other operators.
+     * Instead of building left-to-right, we parse the right side recursively.
+     * 
+     * @return AST node representing the parsed power expression
+     * @throws SyntaxError if power expression is malformed
+     */
+    private ASTNode power() throws SyntaxError {
+        ASTNode leftNode = factor();  // Start with highest-precedence factor
+        
+        // Handle exponentiation (right-associative)
+        if (currentToken != null && CONSTANTS.TT_POW.equals(currentToken.getType())) { // "ascend"
+            Token opToken = currentToken;  // Save the operator
+            advance();                     // Move past operator
+            
+            // RIGHT-ASSOCIATIVE: recursively call power() for right side
+            // This ensures "2^3^4" becomes "2^(3^4)" not "(2^3)^4"
+            ASTNode rightNode = power();   // Recursive call for right-associativity
+            
+            // Create binary operation node
+            leftNode = new BinOpNode(leftNode, opToken, rightNode);
         }
         
         return leftNode;
