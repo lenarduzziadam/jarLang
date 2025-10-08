@@ -11,6 +11,18 @@ public class JarlangShell {
     private Scanner scanner;
     private boolean showTokens = true; // Debug mode toggle
 
+    // ANSI Color codes for token formatting
+    private static final String RESET = "\u001B[0m";
+    private static final String RED = "\u001B[31m";      // Operators
+    private static final String GREEN = "\u001B[32m";    // Numbers
+    private static final String BLUE = "\u001B[34m";     // Keywords/Identifiers
+    private static final String YELLOW = "\u001B[33m";   // Punctuation
+    private static final String CYAN = "\u001B[36m";     // Strings
+    private static final String MAGENTA = "\u001B[35m";  // Special tokens
+    private static final String PURPLE = "\u001B[35m";  // Additional color example
+    private static final String LIGHTGREEN = "\u001B[92m";  // Another color example
+    private static final String PINK = "\u001B[35m";  // Yet another color example
+
     public JarlangShell() {
         this.scanner = new Scanner(System.in);
         // Initialize components (will create these classes next)
@@ -134,6 +146,49 @@ public class JarlangShell {
         }
     }
 
+    private String getTokenColor(Token token) {
+        String type = token.getType();
+        
+        // Numbers
+        if ("int".equals(type) || "float".equals(type)) {
+            return GREEN;
+        }
+        // Operators
+        else if ("commune".equals(type) || "banish".equals(type) || 
+                "rally".equals(type) || "slash".equals(type) || "ascend".equals(type)) {
+            return RED;
+        }
+        // Punctuation
+        else if ("gather".equals(type) || "disperse".equals(type) || 
+                "separate".equals(type) || "conclude".equals(type)) {
+            return YELLOW;
+        }
+        // Keywords/Constants
+        else if ("Wheel O' Fate".equals(type) || "mark".equals(type) || "word".equals(type) || "equals".equals(type)) {
+            return BLUE;
+        }
+        // Strings
+        else if ("tale".equals(type)) {
+            return CYAN;
+        }
+        // Special
+        else if ("end".equals(type)) {
+            return MAGENTA;
+        }
+        // Purple
+        else if( "chant".equals(type) || "forge".equals(type) || "mend".equals(type)) {
+            return PURPLE;
+        }
+        // Orange
+        else if("differ".equals(type) || 
+                "lessen".equals(type) || "heighten".equals(type)) {
+            return PINK;
+        }
+        // Default (no color)
+        else {
+            return LIGHTGREEN;
+        }
+    }
     /**
      * Format tokens for display - equivalent to token_str building in Mojo
      */
@@ -141,7 +196,12 @@ public class JarlangShell {
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < tokens.size(); i++) {
             if (i > 0) sb.append(", ");
-            sb.append("{").append(tokens.get(i).toString()).append("}");
+            String color = getTokenColor(tokens.get(i));
+            sb.append("{")
+                .append(color)
+                .append(tokens.get(i).toString())
+                .append(RESET)
+                .append("}");
         }
         sb.append("]");
         return sb.toString();

@@ -216,7 +216,7 @@ class Token {
     @Override
     public String toString() {
         if (!value.isEmpty()) {
-            return type + ":" + value;  // e.g., "int:42", "commune:+"
+            return type + ": '" + value + "'";  // e.g., "int:42", "commune:+"
         }
         return type;  // e.g., "end" for EOF token
     }
@@ -426,6 +426,12 @@ class JarlangLexer {
             else if (isDigit(currentChar)) {
                 tokens.add(makeNumber());  // Delegate to specialized method
             }
+
+            // IDENTIFIERS AND KEYWORDS - multi-character names like "pi"
+            else if (Character.isLetter(currentChar.charAt(0))) {
+                tokens.add(makeIdentifier());
+            }
+
             
             // MATHEMATICAL OPERATORS - mapped to warrior theme
             // Each operator gets converted to its warrior-themed token type
@@ -601,6 +607,44 @@ class JarlangLexer {
         } else {
             return new Token(CONSTANTS.TT_FLOAT, numStr.toString());    // "float"
         }
+    }
+
+    /**
+     * SPECIALIZED IDENTIFIER TOKENIZATION METHOD
+     * 
+     * This method handles the parsing of identifiers, which are names
+     * used for variables, functions, and keywords. Identifiers can consist
+     * of letters, digits, and underscores, but must start with a letter.
+     * 
+     * ALGORITHM:
+     * 1. Start with a letter (already confirmed by caller)
+     * 2. Collect subsequent letters, digits, or underscores
+     * 3. Stop at first character that is not valid for identifiers
+     * 4. Return token with type IDENTIFIER and collected name
+     * 
+     * FUTURE ENHANCEMENT:
+     * - Check if the identifier matches any reserved keywords
+     *   and return appropriate token type if so.
+     * 
+     * @return Token representing the parsed identifier
+     */
+    private Token makeIdentifier() {
+        StringBuilder idStr = new StringBuilder();
+        
+        // Collect letters, digits, and underscores for identifiers
+        while (!currentChar.isEmpty() && (Character.isLetterOrDigit(currentChar.charAt(0)) || "_".equals(currentChar))) {
+            idStr.append(currentChar);
+            advance();
+        }
+        
+        String id = idStr.toString();
+
+        if("pi".equals(id)) {
+            // Future enhancement: return specific keyword token type
+            // For now, treat all keywords as identifiers
+            return new Token(CONSTANTS.TT_PI, String.valueOf(Math.PI));
+        }
+        return new Token(CONSTANTS.TT_IDENTIFIER, id);  // "identifier"
     }
 }
 
@@ -1195,6 +1239,13 @@ class JarlangParser {
             advance();  // Consume the number token
             return new NumberNode(tok);
         } 
+
+        // CASE 1.5: Pi constant
+        else if (tok != null && CONSTANTS.TT_PI.equals(tok.getType())) {  // "pi"
+            advance();  // Consume the pi token
+            return new NumberNode(tok);
+        }
+
         // CASE 2: Parenthesized expression
         else if (tok != null && CONSTANTS.TT_LPAREN.equals(tok.getType())) {  // "gather"
             advance();  // Consume opening parenthesis

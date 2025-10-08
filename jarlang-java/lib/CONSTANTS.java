@@ -20,6 +20,9 @@ public class CONSTANTS {
     // Mathematical tokens for expressions
     public static final String TT_INT        = "int";
     public static final String TT_FLOAT      = "float";
+    public static final String TT_NEWLINE    = "newline";
+    public static final String TT_WHITESPACE = "whitespace";
+    public static final String TT_PI         = "Wheel O' Fate"; // π symbol
     public static final String TT_PLUS       = "commune";
     public static final String TT_MINUS      = "banish";
     public static final String TT_MUL        = "rally";
