@@ -9,10 +9,6 @@ import java.util.List;
  */
 public class JarlangShell {
     private Scanner scanner;
-    // TODO: Uncomment when we implement these classes
-    // private JarlangLexer lexer;
-    // private JarlangParser parser;
-    // private JarlangInterpreter interpreter;
     private boolean showTokens = true; // Debug mode toggle
 
     public JarlangShell() {

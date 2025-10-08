@@ -865,6 +865,75 @@ class BinOpNode extends ASTNode {
     }
 }
 
+//////////////////////////////////
+/// UNARY OPERATION NODE (FUTURE FEATURE) ///
+/// (Not yet integrated into parser) ///
+//////////////////////////////////
+class UnaryOpNode extends ASTNode {
+    private Token opToken;    // Operator token (e.g., banish for negation)
+    private ASTNode node;     // Operand (any AST node)
+    
+    /**
+     * Constructor creates a unary operation node
+     * 
+     * @param opToken Operator token (e.g., banish for negation)
+     * @param node Operand (can be any ASTNode)
+     */
+    public UnaryOpNode(Token opToken, ASTNode node) {
+        this.opToken = opToken;
+        this.node = node;
+    }
+    
+    // Getter methods for accessing components
+    public Token getOpToken() { return opToken; }
+    public ASTNode getNode() { return node; }
+    
+    /**
+     * Evaluate this unary operation
+     * 
+     * This method implements unary operations like negation.
+     * 
+     * OPERATION MAPPING:
+     * - "banish" (TT_MINUS) → negation (-)
+     * - "commune" (TT_PLUS) → unary plus (+) [no effect]
+     * 
+     * @return Result of applying the unary operation to the operand
+     * @throws InterpreterError for runtime errors (unknown operators)
+     */
+    @Override
+    public double evaluate() throws InterpreterError {
+        double value = node.evaluate();
+        
+        String opType = opToken.getType();
+        
+        if (CONSTANTS.TT_MINUS.equals(opType)) {         // "banish"
+            return -value;
+        } else if (CONSTANTS.TT_PLUS.equals(opType)) {   // "commune"
+            return value;  // Unary plus has no effect
+        } else {
+            // Unknown operator - should never happen if parser is correct
+            throw new InterpreterError("Unknown unary operator: " + opType);
+        }
+    }
+    
+    /**
+     * Return node type identifier
+     */
+    @Override
+    public String getNodeType() { return "unaryop"; }
+    
+    /**
+     * String representation showing the unary operation
+     * Format: "(operator){operand}"
+     * Example: "(banish){5}" for "-5"
+     */
+    @Override
+    public String toString() {
+        return "(" + opToken.toString() + "){" + node.toString() + "}";
+    }
+}
+
+
 //////////////////////////////
 /// RECURSIVE DESCENT PARSER ///
 //////////////////////////////
@@ -1098,10 +1167,19 @@ class JarlangParser {
      */
     private ASTNode factor() throws SyntaxError {
         Token tok = currentToken;
+
+        // CASE 0: Unary operators (ADD THIS HERE - before CASE 1)
+        if (tok != null && (CONSTANTS.TT_MINUS.equals(tok.getType()) || 
+                        CONSTANTS.TT_PLUS.equals(tok.getType()))) {
+            // Handle unary minus and plus here
+            advance();  // Consume the unary operator
+            ASTNode factorNode = factor();  // Parse the factor
+            return new UnaryOpNode(tok, factorNode);
+        }
         
         // CASE 1: Numeric literal (integer or float)
         if (tok != null && (CONSTANTS.TT_INT.equals(tok.getType()) || 
-                           CONSTANTS.TT_FLOAT.equals(tok.getType()))) {
+                           CONSTANTS.TT_FLOAT.equals(tok.getType()))) {  // "int" or "float"
             advance();  // Consume the number token
             return new NumberNode(tok);
         } 
