@@ -933,6 +933,18 @@ class UnaryOpNode extends ASTNode {
     }
 }
 
+class Context {
+    // Future context for variables, functions, etc.
+    private Map<String, Double> variables = new HashMap<>();
+
+    public void setVariable(String name, double value) {
+        variables.put(name, value);
+    }
+    
+    public Double getVariable(String name) {
+        return variables.get(name);
+    }
+}
 
 //////////////////////////////
 /// RECURSIVE DESCENT PARSER ///
@@ -1504,7 +1516,7 @@ class JarlangTestUtils {
     private static String getTokenExplanation(String tokenType) {
         switch (tokenType) {
             case "commune":    return "Addition operator (+) - brings numbers together";
-            case "banish":     return "Subtraction operator (-) - removes value";
+            case "banish":     return "Subtraction/Negative operator (-) - removes value";
             case "rally":      return "Multiplication operator (*) - amplifies numbers";
             case "slash":      return "Division operator (/) - splits numbers apart";
             case "gather":     return "Left parenthesis (() - groups expressions";
