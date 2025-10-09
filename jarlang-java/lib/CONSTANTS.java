@@ -1,12 +1,22 @@
 package lib;
 
+import java.util.Set;
+
+
 /**
  * Constants for Jarlang Programming Language
  * Warrior-themed token definitions and other constants
  * Translated from constants.mojo
  */
 public class CONSTANTS {
-    
+
+    //////////////////////////////
+    /// KEYWORDS FOR JARLANG  ///
+    //////////////////////////////
+    public static final Set<String> KEYWORDS = Set.of(
+        "judge", "orjudge", "lest", "endure", "march", "mend", "forge", "wield", "vow", "sacred"
+    );
+
     //////////////////////////////
     /// CONSTANTS FOR JARLANG  ///
     //////////////////////////////
@@ -43,9 +53,9 @@ public class CONSTANTS {
     public static final String TT_RBRACE     = "release";
     
     // Non-mathematical tokens for comments, functions, etc.
+    public static final String TT_KEYWORD    = "pierce";
     public static final String TT_PRINT      = "chant";
     public static final String TT_STRING     = "tale";
-    public static final String TT_KEYWORD    = "word";
     public static final String TT_EOF        = "end";
     public static final String TT_RETURN     = "mend";
     public static final String TT_FUNCTION   = "forge";

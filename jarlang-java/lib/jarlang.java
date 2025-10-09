@@ -644,6 +644,12 @@ class JarlangLexer {
             // For now, treat all keywords as identifiers
             return new Token(CONSTANTS.TT_PI, String.valueOf(Math.PI));
         }
+
+        if (CONSTANTS.KEYWORDS.contains(id)) {
+            // Future enhancement: return specific keyword token type
+            // For now, treat all keywords as identifiers
+            return new Token(CONSTANTS.TT_KEYWORD, id);  // "keyword"
+        }
         return new Token(CONSTANTS.TT_IDENTIFIER, id);  // "identifier"
     }
 }
@@ -985,7 +991,7 @@ class UnaryOpNode extends ASTNode {
 /// ////////////////////////////
 class Context {
     // Existing field
-    private Map<String, Double> variables = new HashMap<>();
+    // private Map<String, Double> variables = new HashMap<>();
     
     // NEW FIELDS TO ADD:
     private String displayName;           // Human-readable context name
