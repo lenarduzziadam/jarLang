@@ -63,6 +63,15 @@ public class JarlangShell {
                     System.out.println("Token display " + (showTokens ? "enabled" : "disabled"));
                     continue;
                 }
+
+                // In your shell's main loop, add this test command:
+                if (input.equals("!context")) {
+                    Context testContext = new Context("test");
+                    testContext.setVariable("x", 42.0);
+                    System.out.println("Stored x = " + testContext.getVariable("x"));
+                    System.out.println("Context: " + testContext.getDisplayName());
+                    continue;
+                }
                 
                 // Process expression
                 if (!input.isEmpty()) {

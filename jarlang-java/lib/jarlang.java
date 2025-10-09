@@ -916,8 +916,8 @@ class BinOpNode extends ASTNode {
 }
 
 //////////////////////////////////
-/// UNARY OPERATION NODE (FUTURE FEATURE) ///
-/// (Not yet integrated into parser) ///
+/// UNARY OPERATION NODE  ///
+///  ///////////////////////////////////
 //////////////////////////////////
 class UnaryOpNode extends ASTNode {
     private Token opToken;    // Operator token (e.g., banish for negation)
@@ -991,7 +991,7 @@ class UnaryOpNode extends ASTNode {
 /// ////////////////////////////
 class Context {
     // Existing field
-    // private Map<String, Double> variables = new HashMap<>();
+    private Map<String, Double> variables = new HashMap<>();
     
     // NEW FIELDS TO ADD:
     private String displayName;           // Human-readable context name
@@ -1026,13 +1026,13 @@ class Context {
         return hasParent() ? parentContext.getDepth() + 1 : 0;
     }
 
-    // public void setVariable(String name, double value) {
-    //     variables.put(name, value);
-    // }
+    public void setVariable(String name, double value) {
+        variables.put(name, value);
+    }
 
-    // public Double getVariable(String name) {
-    //     return variables.get(name);
-    // }
+    public Double getVariable(String name) {
+        return variables.get(name);
+    }
 
 }
 
