@@ -1,5 +1,6 @@
 package lib;
 
+import java.util.Map;
 import java.util.Set;
 
 
@@ -20,10 +21,34 @@ public class CONSTANTS {
     /// Keywords include control flow, function definitions, etc.
     /// Examples: "judge", "orjudge", "lest", "endure", "march", "mend", "forge", "wield", "vow", "sacred"
     /// These correspond to if, else, while, for, return, function, let, const, final, print in traditional languages
-    
-    public static final Set<String> KEYWORDS = Set.of(
-        "judge", "orjudge", "lest", "endure", "march", "mend", "forge", "wield", "vow", "sacred", "chant"
+    public static final String TT_WIELD = "wield";   // Variable assignment
+    public static final String TT_VOW = "vow";       // Constant declaration
+    public static final String TT_SACRED = "sacred"; // Final constant
+    public static final String TT_CHANT = "chant";   // Print statement
+    public static final String TT_JUDGE = "judge"; // If statement
+    public static final String TT_ORJUDGE = "orjudge"; // Else statement
+    public static final String TT_LEST = "lest"; // While loop
+    public static final String TT_ENDURE = "endure"; // For loop
+    public static final String TT_MARCH = "march"; // Function definition
+    public static final String TT_MEND = "mend"; // Return statement
+    public static final String TT_FORGE = "forge"; // Function definition
+    public static final String TT_PIERCE = "pierce"; // Keyword token type
+
+    public static final Map<String, String> KEYWORDS = Map.ofEntries(
+        Map.entry("judge", TT_JUDGE),       // "judge" -> "judge"
+        Map.entry("orjudge", TT_ORJUDGE),   // "orjudge" -> "orjudge"  
+        Map.entry("lest", TT_LEST),         // "lest" -> "lest"
+        Map.entry("endure", TT_ENDURE),     // "endure" -> "endure"
+        Map.entry("march", TT_MARCH),       // "march" -> "march"
+        Map.entry("mend", TT_MEND),         // "mend" -> "mend"
+        Map.entry("forge", TT_FORGE),       // "forge" -> "forge"
+        Map.entry("wield", TT_WIELD),       // "wield" -> "wield"
+        Map.entry("vow", TT_VOW),           // "vow" -> "vow"
+        Map.entry("sacred", TT_SACRED),     // "sacred" -> "sacred"
+        Map.entry("chant", TT_CHANT)        // "chant" -> "chant"
     );
+
+    
 
     //////////////////////////////
     /// CONSTANTS FOR JARLANG  ///

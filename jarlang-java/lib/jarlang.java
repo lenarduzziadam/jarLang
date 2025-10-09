@@ -645,10 +645,11 @@ class JarlangLexer {
             return new Token(CONSTANTS.TT_PI, String.valueOf(Math.PI));
         }
 
-        if (CONSTANTS.KEYWORDS.contains(id)) {
+        if (CONSTANTS.KEYWORDS.containsKey(id)) {
             // Future enhancement: return specific keyword token type
             // For now, treat all keywords as identifiers
-            return new Token(CONSTANTS.TT_KEYWORD, id);  // "keyword"
+            String tokenType = CONSTANTS.KEYWORDS.get(id);
+            return new Token(tokenType, id);  // "keyword"
         }
         return new Token(CONSTANTS.TT_IDENTIFIER, id);  // "identifier"
     }
@@ -997,6 +998,7 @@ class Context {
     private String displayName;           // Human-readable context name
     private Context parentContext;        // Reference to parent scope
     private Position parentEntryPosition; // Where this context was created
+
     
     // CONSTRUCTORS TO ADD:
     // Constructor for root context (no parent)
@@ -1031,7 +1033,18 @@ class Context {
     }
 
     public Double getVariable(String name) {
-        return variables.get(name);
+        // Check current context first
+        if (variables.containsKey(name)) {
+            return variables.get(name);
+        }
+        
+        // If not found and we have a parent, check parent context
+        if (hasParent()) {
+            return parentContext.getVariable(name);
+        }
+        
+        // Variable not found anywhere in the hierarchy
+        return null;
     }
 
 }
