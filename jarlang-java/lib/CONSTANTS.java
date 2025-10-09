@@ -13,8 +13,16 @@ public class CONSTANTS {
     //////////////////////////////
     /// KEYWORDS FOR JARLANG  ///
     //////////////////////////////
+    /// Set of reserved keywords in Jarlang
+    /// These cannot be used as identifiers
+    /// Future enhancement: map keywords to specific token types
+    /// For now, all keywords are treated as TT_KEYWORD tokens
+    /// Keywords include control flow, function definitions, etc.
+    /// Examples: "judge", "orjudge", "lest", "endure", "march", "mend", "forge", "wield", "vow", "sacred"
+    /// These correspond to if, else, while, for, return, function, let, const, final, print in traditional languages
+    
     public static final Set<String> KEYWORDS = Set.of(
-        "judge", "orjudge", "lest", "endure", "march", "mend", "forge", "wield", "vow", "sacred"
+        "judge", "orjudge", "lest", "endure", "march", "mend", "forge", "wield", "vow", "sacred", "chant"
     );
 
     //////////////////////////////
