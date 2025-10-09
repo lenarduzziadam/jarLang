@@ -20,8 +20,8 @@ public class JarlangShell {
     private static final String CYAN = "\u001B[36m";     // Strings
     private static final String MAGENTA = "\u001B[35m";  // Special tokens
     private static final String PURPLE = "\u001B[35m";  // Additional color example
-    private static final String LIGHTGREEN = "\u001B[92m";  // Another color example
-    private static final String PINK = "\u001B[35m";  // Yet another color example
+    private static final String LIGHTGREEN = "\u001B[92m";  
+    private static final String PINK = "\u001B[35m";  
 
     public JarlangShell() {
         this.scanner = new Scanner(System.in);
@@ -163,7 +163,7 @@ public class JarlangShell {
                 "separate".equals(type) || "conclude".equals(type)) {
             return YELLOW;
         }
-        // Keywords/Constants
+        // Keywords/Constants/Equals/Identifiers
         else if ("Wheel O' Fate".equals(type) || "mark".equals(type) || "word".equals(type) || "equals".equals(type)) {
             return BLUE;
         }

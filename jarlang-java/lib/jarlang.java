@@ -977,18 +977,59 @@ class UnaryOpNode extends ASTNode {
     }
 }
 
-class Context {
-    // Future context for variables, functions, etc.
-    private Map<String, Double> variables = new HashMap<>();
 
-    public void setVariable(String name, double value) {
-        variables.put(name, value);
+//////////////////////////////
+/// CONTEXT MANAGEMENT SYSTEM ///
+/// (Future feature for variables, functions, scopes) ///
+/// (Not yet integrated into parser/interpreter) ///
+/// ////////////////////////////
+class Context {
+    // Existing field
+    private Map<String, Double> variables = new HashMap<>();
+    
+    // NEW FIELDS TO ADD:
+    private String displayName;           // Human-readable context name
+    private Context parentContext;        // Reference to parent scope
+    private Position parentEntryPosition; // Where this context was created
+    
+    // CONSTRUCTORS TO ADD:
+    // Constructor for root context (no parent)
+    public Context(String displayName) {
+    // Future context for variables, functions, etc.
+        //private Map<String, Double> variables = new HashMap<>();
+        this.displayName = displayName;
+        this.parentContext = null;
+        this.parentEntryPosition = null;
     }
     
-    public Double getVariable(String name) {
-        return variables.get(name);
+    // Constructor for child context (with parent)
+    public Context(String displayName, Context parent, Position entryPosition) {
+        this.displayName = displayName;
+        this.parentContext = parent;
+        this.parentEntryPosition = entryPosition.copy(); // Defensive copy
     }
+    
+    // GETTER METHODS TO ADD:
+    public String getDisplayName() { return displayName; }
+    public Context getParentContext() { return parentContext; }
+    public Position getParentEntryPosition() { return parentEntryPosition; }
+    
+    // UTILITY METHODS TO ADD:
+    public boolean hasParent() { return parentContext != null; }
+    public int getDepth() {
+        return hasParent() ? parentContext.getDepth() + 1 : 0;
+    }
+
+    // public void setVariable(String name, double value) {
+    //     variables.put(name, value);
+    // }
+
+    // public Double getVariable(String name) {
+    //     return variables.get(name);
+    // }
+
 }
+
 
 //////////////////////////////
 /// RECURSIVE DESCENT PARSER ///
@@ -1450,8 +1491,14 @@ class JarlangRunners {
      * @return Computed numeric result
      * @throws InterpreterError if evaluation fails (e.g., division by zero)
      */
+    public static double runInterpreter(ASTNode ast, Context context) throws InterpreterError {
+        JarlangInterpreter interpreter = new JarlangInterpreter();
+        // Future: Pass context to interpreter for variable/function lookup
+        return interpreter.interpret(ast);
+    }
     public static double runInterpreter(ASTNode ast) throws InterpreterError {
         JarlangInterpreter interpreter = new JarlangInterpreter();
+        Context context = new Context("<global>"); // Create a global context
         return interpreter.interpret(ast);
     }
 }
