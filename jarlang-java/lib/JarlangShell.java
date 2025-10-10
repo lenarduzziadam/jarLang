@@ -2,6 +2,7 @@ package lib;
 
 import java.util.Scanner;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Interactive REPL Shell for Jarlang language
@@ -166,6 +167,20 @@ public class JarlangShell {
                     }
                     continue;
                 }
+
+
+                // if (input.equals("!vars")) {
+                //     if (globalContext != null) {
+                //         System.out.println("=== Current Variables ===");
+                //         // You'll need to add getAllVariables() method to Context
+                //         for (Map.Entry<String, Double> entry : globalContext.getAllVariables().entrySet()) {
+                //             System.out.println("  " + entry.getKey() + " = " + entry.getValue());
+                //         }
+                //     } else {
+                //         System.out.println("No variables wielded yet.");
+                //     }
+                //     continue;
+                // }
                 // Process expression
                 if (!input.isEmpty()) {
                     processExpression(input);
