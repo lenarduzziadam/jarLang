@@ -10,6 +10,7 @@ import java.util.Map;
  */
 public class JarlangShell {
     private Scanner scanner;
+    private Context globalContext;
     private boolean showTokens = true; // Debug mode toggle
 
     // ANSI Color codes for token formatting
@@ -36,6 +37,8 @@ public class JarlangShell {
      * Main REPL loop - equivalent to shell_repl() in Mojo
      */
     public void runREPL() {
+        scanner = new Scanner(System.in);
+        globalContext = new Context("global");
         System.out.println("Jarlang REPL - Type 'q!' to quit or '!help' for help");
         
         while (true) {
@@ -169,18 +172,18 @@ public class JarlangShell {
                 }
 
 
-                // if (input.equals("!vars")) {
-                //     if (globalContext != null) {
-                //         System.out.println("=== Current Variables ===");
-                //         // You'll need to add getAllVariables() method to Context
-                //         for (Map.Entry<String, Double> entry : globalContext.getAllVariables().entrySet()) {
-                //             System.out.println("  " + entry.getKey() + " = " + entry.getValue());
-                //         }
-                //     } else {
-                //         System.out.println("No variables wielded yet.");
-                //     }
-                //     continue;
-                // }
+                if (input.equals("!vars")) {
+                    if (globalContext != null) {
+                        System.out.println("=== Current Variables ===");
+                        // You'll need to add getAllVariables() method to Context
+                        for (Map.Entry<String, Double> entry : globalContext.getAllVariables().entrySet()) {
+                            System.out.println("  " + entry.getKey() + " = " + entry.getValue());
+                        }
+                    } else {
+                        System.out.println("No variables wielded yet.");
+                    }
+                    continue;
+                }
                 // Process expression
                 if (!input.isEmpty()) {
                     processExpression(input);
@@ -257,7 +260,7 @@ public class JarlangShell {
      */
     private double interpret(ASTNode ast) throws InterpreterException {
         try {
-            return JarlangRunners.runInterpreter(ast);
+            return JarlangRunners.runInterpreter(ast, globalContext);
         } catch (InterpreterError e) {
             throw new InterpreterException(e.toString());
         }

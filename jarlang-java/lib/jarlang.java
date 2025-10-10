@@ -1108,6 +1108,36 @@ class Context {
         return null;
     }
 
+    public Map<String, Double> getAllVariables() {
+        Map<String, Double> allVars = new HashMap<>(variables);
+        if (hasParent()) {
+            // Include parent variables (but don't override local ones)
+            Map<String, Double> parentVars = parentContext.getAllVariables();
+            for (Map.Entry<String, Double> entry : parentVars.entrySet()) {
+                allVars.putIfAbsent(entry.getKey(), entry.getValue());
+            }
+        }
+        return allVars;
+    }
+    
+    // @Override
+    // public Map<String, Integer> getAllVariables() {
+    //     Map<String, Integer> allVars = new HashMap<>(variables);
+    //     if (hasParent()) {
+    //         // Include parent variables (but don't override local ones)
+    //         Map<String, Integer> parentVars = parentContext.getAllVariables();
+    //         for (Map.Entry<String, Integer> entry : parentVars.entrySet()) {
+    //             allVars.putIfAbsent(entry.getKey(), entry.getValue());
+    //         }
+    //     }
+    //     return allVars;
+    // }
+
+    public boolean hasVariable(String name) {
+        return variables.containsKey(name) || 
+            (hasParent() && parentContext.hasVariable(name));
+    }
+
 }
 
 
