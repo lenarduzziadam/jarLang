@@ -644,6 +644,13 @@ class JarlangLexer {
             // For now, treat all keywords as identifiers
             return new Token(CONSTANTS.TT_PI, String.valueOf(Math.PI));
         }
+
+        if (CONSTANTS.KEYWORDS.containsKey(id)) {
+            // Future enhancement: return specific keyword token type
+            // For now, treat all keywords as identifiers
+            String tokenType = CONSTANTS.KEYWORDS.get(id);
+            return new Token(tokenType, id);  // "keyword"
+        }
         return new Token(CONSTANTS.TT_IDENTIFIER, id);  // "identifier"
     }
 }
@@ -703,7 +710,11 @@ abstract class ASTNode {
      * @return The numeric result of evaluating this node
      * @throws InterpreterError if evaluation fails (e.g., division by zero)
      */
-    public abstract double evaluate() throws InterpreterError;
+    //TODO: public abstract double evaluate() throws InterpreterError;
+    // Modify ASTNode abstract class:
+    public abstract double evaluate(Context context) throws InterpreterError;
+
+// Update all evaluate methods in NumberNode, BinOpNode, etc. to accept Context
     
     /**
      * Get a string describing the type of this node
@@ -767,7 +778,7 @@ class NumberNode extends ASTNode {
      * @throws InterpreterError if the string cannot be parsed as a number
      */
     @Override
-    public double evaluate() throws InterpreterError {
+    public double evaluate(Context context) throws InterpreterError {
         try {
             return Double.parseDouble(value);
         } catch (NumberFormatException e) {
@@ -863,31 +874,29 @@ class BinOpNode extends ASTNode {
      * @throws InterpreterError for runtime errors (division by zero, unknown operators)
      */
     @Override
-    public double evaluate() throws InterpreterError {
-        // Recursively evaluate both operands (now works with any ASTNode)
-        double leftVal = left.evaluate();
-        double rightVal = right.evaluate();
+    public double evaluate(Context context) throws InterpreterError {
+        // Recursively evaluate both operands with context
+        double leftVal = left.evaluate(context);
+        double rightVal = right.evaluate(context);
         
         // Apply the appropriate operation based on token type
         String opType = opToken.getType();
         
-        if (CONSTANTS.TT_PLUS.equals(opType)) {          // "commune"
+        if (CONSTANTS.TT_PLUS.equals(opType)) {
             return leftVal + rightVal;
-        } else if (CONSTANTS.TT_MINUS.equals(opType)) {   // "banish"
+        } else if (CONSTANTS.TT_MINUS.equals(opType)) {
             return leftVal - rightVal;
-        } else if (CONSTANTS.TT_MUL.equals(opType)) {     // "rally"
+        } else if (CONSTANTS.TT_MUL.equals(opType)) {
             return leftVal * rightVal;
-        } else if (CONSTANTS.TT_DIV.equals(opType)) {     // "slash"
+        } else if (CONSTANTS.TT_DIV.equals(opType)) {
             if (rightVal != 0) {
                 return leftVal / rightVal;
             } else {
-                // Division by zero is a runtime error
                 throw new InterpreterError("Division by zero");
             }
-        } else if (CONSTANTS.TT_POW.equals(opType)) {     // "ascend" - NEW!
+        } else if (CONSTANTS.TT_POW.equals(opType)) {
             return Math.pow(leftVal, rightVal);
         } else {
-            // Unknown operator - should never happen if parser is correct
             throw new InterpreterError("Unknown operator: " + opType);
         }
     }
@@ -910,8 +919,8 @@ class BinOpNode extends ASTNode {
 }
 
 //////////////////////////////////
-/// UNARY OPERATION NODE (FUTURE FEATURE) ///
-/// (Not yet integrated into parser) ///
+/// UNARY OPERATION NODE  ///
+///  ///////////////////////////////////
 //////////////////////////////////
 class UnaryOpNode extends ASTNode {
     private Token opToken;    // Operator token (e.g., banish for negation)
@@ -945,17 +954,16 @@ class UnaryOpNode extends ASTNode {
      * @throws InterpreterError for runtime errors (unknown operators)
      */
     @Override
-    public double evaluate() throws InterpreterError {
-        double value = node.evaluate();
+    public double evaluate(Context context) throws InterpreterError {
+        double value = node.evaluate(context);  // Pass context to operand
         
         String opType = opToken.getType();
         
-        if (CONSTANTS.TT_MINUS.equals(opType)) {         // "banish"
+        if (CONSTANTS.TT_MINUS.equals(opType)) {
             return -value;
-        } else if (CONSTANTS.TT_PLUS.equals(opType)) {   // "commune"
-            return value;  // Unary plus has no effect
+        } else if (CONSTANTS.TT_PLUS.equals(opType)) {
+            return value;
         } else {
-            // Unknown operator - should never happen if parser is correct
             throw new InterpreterError("Unknown unary operator: " + opType);
         }
     }
@@ -977,6 +985,66 @@ class UnaryOpNode extends ASTNode {
     }
 }
 
+/**
+ * AST node for variable assignment: wield variableName expression
+ */
+class AssignmentNode extends ASTNode {
+    private String varName;
+    private ASTNode value;
+    
+    public AssignmentNode(String varName, ASTNode value) {
+        this.varName = varName;
+        this.value = value;
+    }
+    
+    public String getVarName() { return varName; }
+    public ASTNode getValue() { return value; }
+    
+    @Override
+    public double evaluate(Context context) throws InterpreterError {
+        double result = value.evaluate(context);  // Evaluate with context
+        context.setVariable(varName, result);     // Store in context
+        return result;
+    }
+    
+    @Override
+    public String getNodeType() { return "assignment"; }
+    
+    @Override
+    public String toString() {
+        return "(wield " + varName + " " + value.toString() + ")";
+    }
+}
+
+/**
+ * AST node for variable lookup: variableName
+ */
+class VariableNode extends ASTNode {
+    private String varName;
+    
+    public VariableNode(String varName) {
+        this.varName = varName;
+    }
+    
+    public String getVarName() { return varName; }
+    
+    @Override
+    public double evaluate(Context context) throws InterpreterError {
+        Double value = context.getVariable(varName);
+        if (value == null) {
+            throw new InterpreterError("Undefined variable: " + varName);
+        }
+        return value;
+    }
+    
+    @Override
+    public String getNodeType() { return "variable"; }
+    
+    @Override
+    public String toString() {
+        return varName;
+    }
+}
 
 //////////////////////////////
 /// CONTEXT MANAGEMENT SYSTEM ///
@@ -991,6 +1059,7 @@ class Context {
     private String displayName;           // Human-readable context name
     private Context parentContext;        // Reference to parent scope
     private Position parentEntryPosition; // Where this context was created
+
     
     // CONSTRUCTORS TO ADD:
     // Constructor for root context (no parent)
@@ -1020,13 +1089,54 @@ class Context {
         return hasParent() ? parentContext.getDepth() + 1 : 0;
     }
 
-    // public void setVariable(String name, double value) {
-    //     variables.put(name, value);
+    public void setVariable(String name, double value) {
+        variables.put(name, value);
+    }
+
+    public Double getVariable(String name) {
+        // Check current context first
+        if (variables.containsKey(name)) {
+            return variables.get(name);
+        }
+        
+        // If not found and we have a parent, check parent context
+        if (hasParent()) {
+            return parentContext.getVariable(name);
+        }
+        
+        // Variable not found anywhere in the hierarchy
+        return null;
+    }
+
+    public Map<String, Double> getAllVariables() {
+        Map<String, Double> allVars = new HashMap<>(variables);
+        if (hasParent()) {
+            // Include parent variables (but don't override local ones)
+            Map<String, Double> parentVars = parentContext.getAllVariables();
+            for (Map.Entry<String, Double> entry : parentVars.entrySet()) {
+                allVars.putIfAbsent(entry.getKey(), entry.getValue());
+            }
+        }
+        return allVars;
+    }
+    
+    // @Override
+    // public Map<String, Integer> getAllVariables() {
+    //     Map<String, Integer> allVars = new HashMap<>(variables);
+    //     if (hasParent()) {
+    //         // Include parent variables (but don't override local ones)
+    //         Map<String, Integer> parentVars = parentContext.getAllVariables();
+    //         for (Map.Entry<String, Integer> entry : parentVars.entrySet()) {
+    //             allVars.putIfAbsent(entry.getKey(), entry.getValue());
+    //         }
+    //     }
+    //     return allVars;
     // }
 
-    // public Double getVariable(String name) {
-    //     return variables.get(name);
-    // }
+    public boolean hasVariable(String name) {
+        return variables.containsKey(name) || 
+            (hasParent() && parentContext.hasVariable(name));
+    }
 
 }
 
@@ -1118,12 +1228,45 @@ class JarlangParser {
      * @return Root node of the constructed AST
      * @throws SyntaxError if the token sequence is invalid
      */
+    // In JarlangParser class, modify the parse() method:
     public ASTNode parse() throws SyntaxError {
         if (currentToken == null) {
             throw new SyntaxError("No tokens to parse", "at token position " + tokIdx);
         }
-        return expr();  // Start with top-level expression rule
+        return statement();  // Change from expr() to statement()
     }
+
+    // Add new statement parsing method:
+    private ASTNode statement() throws SyntaxError {
+        // Check for assignment: wield identifier expression
+        if (currentToken != null && "wield".equals(currentToken.getType())) {
+            return assignment();
+        }
+        
+        // Otherwise, parse as expression
+        return expr();
+    }
+
+    // Add assignment parsing method:
+    private ASTNode assignment() throws SyntaxError {
+        // Consume 'wield' keyword
+        advance();
+        
+        // Expect identifier (variable name)
+        if (currentToken == null || !CONSTANTS.TT_IDENTIFIER.equals(currentToken.getType())) {
+            throw new SyntaxError("Expected variable name after 'wield'", "at token position " + tokIdx);
+        }
+        
+        String varName = currentToken.getValue();
+        advance(); // Consume identifier
+        
+        // Parse the value expression
+        ASTNode value = expr();
+        
+        return new AssignmentNode(varName, value);
+    }
+
+    
     
     /**
      * EXPRESSION PARSING - Top level of operator precedence
@@ -1262,40 +1405,44 @@ class JarlangParser {
      * @return AST node representing the parsed factor
      * @throws SyntaxError if factor is invalid
      */
+    // Modify factor() to handle variable lookup:
     private ASTNode factor() throws SyntaxError {
         Token tok = currentToken;
 
-        // CASE 0: Unary operators (ADD THIS HERE - before CASE 1)
+        // CASE 0: Unary operators
         if (tok != null && (CONSTANTS.TT_MINUS.equals(tok.getType()) || 
                         CONSTANTS.TT_PLUS.equals(tok.getType()))) {
-            // Handle unary minus and plus here
-            advance();  // Consume the unary operator
-            ASTNode factorNode = factor();  // Parse the factor
+            advance();
+            ASTNode factorNode = factor();
             return new UnaryOpNode(tok, factorNode);
         }
         
-        // CASE 1: Numeric literal (integer or float)
+        // CASE 1: Numeric literal
         if (tok != null && (CONSTANTS.TT_INT.equals(tok.getType()) || 
-                           CONSTANTS.TT_FLOAT.equals(tok.getType()))) {  // "int" or "float"
-            advance();  // Consume the number token
+                        CONSTANTS.TT_FLOAT.equals(tok.getType()))) {
+            advance();
             return new NumberNode(tok);
         } 
 
         // CASE 1.5: Pi constant
-        else if (tok != null && CONSTANTS.TT_PI.equals(tok.getType())) {  // "pi"
-            advance();  // Consume the pi token
+        else if (tok != null && CONSTANTS.TT_PI.equals(tok.getType())) {
+            advance();
             return new NumberNode(tok);
         }
 
+        // CASE 1.75: Variable lookup (NEW!)
+        else if (tok != null && CONSTANTS.TT_IDENTIFIER.equals(tok.getType())) {
+            advance();
+            return new VariableNode(tok.getValue());
+        }
+
         // CASE 2: Parenthesized expression
-        else if (tok != null && CONSTANTS.TT_LPAREN.equals(tok.getType())) {  // "gather"
-            advance();  // Consume opening parenthesis
+        else if (tok != null && CONSTANTS.TT_LPAREN.equals(tok.getType())) {
+            advance();
+            ASTNode node = expr();
             
-            ASTNode node = expr();  // Recursively parse the inner expression
-            
-            // Expect closing parenthesis
-            if (currentToken != null && CONSTANTS.TT_RPAREN.equals(currentToken.getType())) {  // "disperse"
-                advance();  // Consume closing parenthesis
+            if (currentToken != null && CONSTANTS.TT_RPAREN.equals(currentToken.getType())) {
+                advance();
                 return node;
             } else {
                 throw new SyntaxError("Expected ')'", "at token position " + tokIdx);
@@ -1303,7 +1450,7 @@ class JarlangParser {
         } 
         // CASE 3: Invalid factor
         else {
-            throw new SyntaxError("Expected int, float or '('", "at token position " + tokIdx);
+            throw new SyntaxError("Expected int, float, identifier, or '('", "at token position " + tokIdx);
         }
     }
 }
@@ -1346,6 +1493,30 @@ class JarlangParser {
  */
 class JarlangInterpreter {
     
+    private Context context;  // Current variable/function context (for future use)
+    
+    /**
+     * Interpret a complete AST and return the result
+     * 
+     * This is the main public interface for the interpreter.
+     * It provides a clean abstraction for evaluating parsed expressions.
+     * 
+     * @param ast The root node of the Abstract Syntax Tree
+     * @return The final computed value of the expression
+     * @throws InterpreterError if evaluation encounters runtime errors
+     */
+    // Update the interpret method
+    public double interpret(ASTNode ast, Context context) throws InterpreterError {
+        this.context = context;
+        return visit(ast);
+    }
+    
+    // Keep existing interpret method for backward compatibility
+    public double interpret(ASTNode ast) throws InterpreterError {
+        Context globalContext = new Context("global");
+        return interpret(ast, globalContext);
+    }
+
     /**
      * Visit an AST node and evaluate it
      * 
@@ -1358,21 +1529,7 @@ class JarlangInterpreter {
      * @throws InterpreterError if evaluation fails
      */
     public double visit(ASTNode node) throws InterpreterError {
-        return node.evaluate();  // Delegate to node's evaluation method
-    }
-    
-    /**
-     * Interpret a complete AST and return the result
-     * 
-     * This is the main public interface for the interpreter.
-     * It provides a clean abstraction for evaluating parsed expressions.
-     * 
-     * @param ast The root node of the Abstract Syntax Tree
-     * @return The final computed value of the expression
-     * @throws InterpreterError if evaluation encounters runtime errors
-     */
-    public double interpret(ASTNode ast) throws InterpreterError {
-        return visit(ast);
+        return node.evaluate(context);  // Delegate to node's evaluation method
     }
 }
 
@@ -1494,12 +1651,12 @@ class JarlangRunners {
     public static double runInterpreter(ASTNode ast, Context context) throws InterpreterError {
         JarlangInterpreter interpreter = new JarlangInterpreter();
         // Future: Pass context to interpreter for variable/function lookup
-        return interpreter.interpret(ast);
+        return interpreter.interpret(ast, context);
     }
     public static double runInterpreter(ASTNode ast) throws InterpreterError {
         JarlangInterpreter interpreter = new JarlangInterpreter();
         Context context = new Context("<global>"); // Create a global context
-        return interpreter.interpret(ast);
+        return interpreter.interpret(ast, context);
     }
 }
 

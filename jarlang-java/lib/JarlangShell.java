@@ -2,6 +2,7 @@ package lib;
 
 import java.util.Scanner;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Interactive REPL Shell for Jarlang language
@@ -9,6 +10,7 @@ import java.util.List;
  */
 public class JarlangShell {
     private Scanner scanner;
+    private Context globalContext;
     private boolean showTokens = true; // Debug mode toggle
 
     // ANSI Color codes for token formatting
@@ -35,6 +37,8 @@ public class JarlangShell {
      * Main REPL loop - equivalent to shell_repl() in Mojo
      */
     public void runREPL() {
+        scanner = new Scanner(System.in);
+        globalContext = new Context("global");
         System.out.println("Jarlang REPL - Type 'q!' to quit or '!help' for help");
         
         while (true) {
@@ -63,7 +67,123 @@ public class JarlangShell {
                     System.out.println("Token display " + (showTokens ? "enabled" : "disabled"));
                     continue;
                 }
-                
+
+                // In your shell's main loop, add this test command:
+                if (input.equals("!context")) {
+                    Context testContext = new Context("test");
+                    testContext.setVariable("x", 42.0);
+                    System.out.println("Stored x = " + testContext.getVariable("x"));
+                    System.out.println("Context: " + testContext.getDisplayName());
+                    continue;
+                }
+
+                // Test variable scoping
+                if (input.equals("!scope")) {
+                    Context global = new Context("global");
+                    global.setVariable("health", 100.0);
+                    global.setVariable("maxHealth", 150.0);
+                    
+                    Context local = new Context("function:battle", global, new Position(1, 1, 1));
+                    local.setVariable("damage", 25.0);
+                    local.setVariable("armor", 5.0);
+                    
+                    System.out.println("Global context: " + global.getDisplayName());
+                    System.out.println("  health = " + global.getVariable("health"));
+                    System.out.println("  maxHealth = " + global.getVariable("maxHealth"));
+                    
+                    System.out.println("Local context: " + local.getDisplayName());
+                    System.out.println("  damage = " + local.getVariable("damage"));
+                    System.out.println("  armor = " + local.getVariable("armor"));
+                    System.out.println("  health (inherited) = " + local.getVariable("health"));
+                    
+                    // Test calculations
+                    System.out.println("\n=== Combat Calculations ===");
+                    double health = local.getVariable("health");
+                    double damage = local.getVariable("damage");
+                    double armor = local.getVariable("armor");
+                    
+                    double actualDamage = damage - armor;
+                    double newHealth = health - actualDamage;
+                    
+                    System.out.println("damage - armor = " + actualDamage + " (actual damage)");
+                    System.out.println("health - actualDamage = " + newHealth + " (new health)");
+                    continue;
+                }
+
+                // Test context hierarchy
+                if (input.equals("!hierarchy")) {
+                    Context root = new Context("root");
+                    Context child = new Context("child", root, new Position(1, 1, 1));
+                    Context grandchild = new Context("grandchild", child, new Position(2, 1, 5));
+                    
+                    System.out.println("Hierarchy depth:");
+                    System.out.println("  Root: " + root.getDepth());
+                    System.out.println("  Child: " + child.getDepth());
+                    System.out.println("  Grandchild: " + grandchild.getDepth());
+                    continue;
+                }
+
+                if (input.equals("!calc")) {
+                    Context calc = new Context("calculator");
+                    
+                    // Pre-populate with some warrior-themed variables
+                    calc.setVariable("strength", 50.0);
+                    calc.setVariable("defense", 20.0);
+                    calc.setVariable("speed", 30.0);
+                    calc.setVariable("health", 100.0);
+                    calc.setVariable("mana", 75.0);
+                    
+                    System.out.println("=== Warrior Calculator ===");
+                    System.out.println("Available variables:");
+                    System.out.println("  strength = 50");
+                    System.out.println("  defense = 20"); 
+                    System.out.println("  speed = 30");
+                    System.out.println("  health = 100");
+                    System.out.println("  mana = 75");
+                    
+                    System.out.println("\nSample calculations:");
+                    System.out.println("  health - defense = " + (calc.getVariable("health") - calc.getVariable("defense")));
+                    System.out.println("  strength * 2 = " + (calc.getVariable("strength") * 2));
+                    System.out.println("  mana + health = " + (calc.getVariable("mana") + calc.getVariable("health")));
+                    System.out.println("  strength - speed = " + (calc.getVariable("strength") - calc.getVariable("speed")));
+                    continue;
+                }
+                // Test specific token types
+                if (input.equals("!tokentest")) {
+                    String[] testInputs = {
+                        "pi", "3.14159", "gather", "disperse", 
+                        "commune", "banish", "rally", "slash", "ascend",
+                        "42 + pi * 2"
+                    };
+                    
+                    for (String test : testInputs) {
+                        System.out.println("Input: '" + test + "'");
+                        try {
+                            List<Token> tokens = tokenize(test);
+                            for (Token token : tokens) {
+                                System.out.println("  " + getTokenColor(token) + token.toString() + RESET);
+                            }
+                        } catch (Exception e) {
+                            System.err.println("  Error: " + e.getMessage());
+                        }
+                        System.out.println();
+                    }
+                    continue;
+                }
+
+
+                if (input.equals("!vars")) {
+                    if (globalContext != null) {
+                        System.out.println("=== Current Variables ===");
+                        // You'll need to add getAllVariables() method to Context
+                        for (Map.Entry<String, Double> entry : globalContext.getAllVariables().entrySet()) {
+                            System.out.println("  " + entry.getKey() + " = " + entry.getValue());
+                        }
+                    } else {
+                        System.out.println("No variables wielded yet.");
+                    }
+                    continue;
+                }
                 // Process expression
                 if (!input.isEmpty()) {
                     processExpression(input);
@@ -140,7 +260,7 @@ public class JarlangShell {
      */
     private double interpret(ASTNode ast) throws InterpreterException {
         try {
-            return JarlangRunners.runInterpreter(ast);
+            return JarlangRunners.runInterpreter(ast, globalContext);
         } catch (InterpreterError e) {
             throw new InterpreterException(e.toString());
         }
