@@ -1621,12 +1621,12 @@ class JarlangRunners {
     public static double runInterpreter(ASTNode ast, Context context) throws InterpreterError {
         JarlangInterpreter interpreter = new JarlangInterpreter();
         // Future: Pass context to interpreter for variable/function lookup
-        return interpreter.interpret(ast);
+        return interpreter.interpret(ast, context);
     }
     public static double runInterpreter(ASTNode ast) throws InterpreterError {
         JarlangInterpreter interpreter = new JarlangInterpreter();
         Context context = new Context("<global>"); // Create a global context
-        return interpreter.interpret(ast);
+        return interpreter.interpret(ast, context);
     }
 }
 
