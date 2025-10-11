@@ -1109,6 +1109,58 @@ class StringNode extends ASTNode {
     }
 }
 
+/**
+ * Unified result type that can hold either numeric or string values
+ */
+class Result {
+    private Object value;
+    private ResultType type;
+    
+    public enum ResultType {
+        NUMBER, STRING
+    }
+    
+    // Constructor for numeric results
+    public Result(double value) {
+        this.value = value;
+        this.type = ResultType.NUMBER;
+    }
+    
+    // Constructor for string results
+    public Result(String value) {
+        this.value = value;
+        this.type = ResultType.STRING;
+    }
+    
+    // Getters
+    public Object getValue() { return value; }
+    public ResultType getType() { return type; }
+    
+    public boolean isNumber() { return type == ResultType.NUMBER; }
+    public boolean isString() { return type == ResultType.STRING; }
+    
+    public double asNumber() {
+        if (isNumber()) {
+            return (Double) value;
+        }
+        throw new RuntimeException("Result is not a number");
+    }
+    
+    public String asString() {
+        if (isString()) {
+            return (String) value;
+        }
+        return value.toString(); // Convert number to string
+    }
+    
+    @Override
+    public String toString() {
+        if (isString()) {
+            return "\"" + value + "\"";
+        }
+        return value.toString();
+    }
+}
 
 //////////////////////////////
 /// CONTEXT MANAGEMENT SYSTEM ///

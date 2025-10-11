@@ -166,13 +166,20 @@ public class JarlangShell {
             ASTNode ast = parse(tokens);
             if (ast != null) {
                 System.out.println("AST: " + ast.toString());
+
+                // Evaluate/Interpret - now returns Result object
+                Result result = interpret(ast);
                 
-                // Evaluate/Interpret
-                double result = interpret(ast);
-                System.out.println("Result: " + formatResult(result));
+                /// Display result based on type
+                if (result.isString()) {
+                    System.out.println("Result: " + result.asString());
+                } else {
+                    System.out.println("Result: " + formatResult(result.asNumber()));
+                }
+                
                 System.out.println("JarKnight: Successfully evaluated!");
             }
-            
+                
         } catch (LexerException e) {
             System.err.println("JarKnight Ashamed: " + e.getMessage());
         } catch (ParserException e) {
@@ -210,9 +217,31 @@ public class JarlangShell {
     /**
      * Interpret/evaluate AST
      */
-    private double interpret(ASTNode ast) throws InterpreterException {
+    /**
+     * Interpret/evaluate AST with unified result handling
+     */
+    private Result interpret(ASTNode ast) throws InterpreterException {
         try {
-            return JarlangRunners.runInterpreter(ast, globalContext);
+            // Check if this is a string variable lookup
+            if (ast instanceof VariableNode) {
+                VariableNode varNode = (VariableNode) ast;
+                Object value = globalContext.getVariable(varNode.getVarName());
+                
+                if (value == null) {
+                    throw new InterpreterException("Undefined variable: " + varNode.getVarName());
+                }
+                
+                if (value instanceof String) {
+                    return new Result((String) value);
+                } else {
+                    return new Result((Double) value);
+                }
+            }
+            
+            // For all other expressions, evaluate as number
+            double numResult = JarlangRunners.runInterpreter(ast, globalContext);
+            return new Result(numResult);
+            
         } catch (InterpreterError e) {
             throw new InterpreterException(e.toString());
         }
