@@ -1002,9 +1002,18 @@ class AssignmentNode extends ASTNode {
     
     @Override
     public double evaluate(Context context) throws InterpreterError {
-        double result = value.evaluate(context);  // Evaluate with context
-        context.setVariable(varName, result);     // Store in context
-        return result;
+        if (value instanceof StringNode) {
+            // Store as string
+            StringNode stringNode = (StringNode) value;
+            String stringValue = stringNode.evaluateAsString(context);
+            context.setVariable(varName, stringValue);
+            return 0.0; // Return dummy value for string assignments
+        } else {
+            // Store as number
+            double result = value.evaluate(context);
+            context.setVariable(varName, result);
+            return result;
+        }
     }
     
     @Override
@@ -1030,19 +1039,126 @@ class VariableNode extends ASTNode {
     
     @Override
     public double evaluate(Context context) throws InterpreterError {
-        Double value = context.getVariable(varName);
+        Object value = context.getVariable(varName);
         if (value == null) {
             throw new InterpreterError("Undefined variable: " + varName);
         }
-        return value;
+        if (value instanceof Double) {
+            return (Double) value;
+        } else if (value instanceof String) {
+            try {
+                return Double.parseDouble((String) value);
+            } catch (NumberFormatException e) {
+                throw new InterpreterError("Variable '" + varName + "' is not a number");
+            }
+        } else {
+            throw new InterpreterError("Variable '" + varName + "' has unsupported type");
+        }
+        // Future enhancement: support other types (e.g., strings)
     }
-    
+    // Add method to get string value
+    public String evaluateAsString(Context context) throws InterpreterError {
+        Object value = context.getVariable(varName);
+        if (value == null) {
+            throw new InterpreterError("Undefined variable: " + varName);
+        }
+        return value.toString();
+    }
     @Override
     public String getNodeType() { return "variable"; }
     
     @Override
     public String toString() {
         return varName;
+    }
+}
+
+/**
+ * AST node for string literals: "hello world"
+ */
+class StringNode extends ASTNode {
+    private String value;
+    
+    public StringNode(Token token) {
+        this.value = token.getValue();
+    }
+    
+    public StringNode(String value) {
+        this.value = value;
+    }
+    
+    public String getValue() { return value; }
+    
+    @Override
+    public double evaluate(Context context) throws InterpreterError {
+        // For now, strings can't be used in numeric contexts
+        throw new InterpreterError("Cannot use string '" + value + "' in numeric expression");
+    }
+    
+    // Add method to get string value
+    public String evaluateAsString(Context context) {
+        return value;
+    }
+    
+    @Override
+    public String getNodeType() { return "string"; }
+    
+    @Override
+    public String toString() {
+        return "\"" + value + "\"";
+    }
+}
+
+/**
+ * Unified result type that can hold either numeric or string values
+ */
+class Result {
+    private Object value;
+    private ResultType type;
+    
+    public enum ResultType {
+        NUMBER, STRING
+    }
+    
+    // Constructor for numeric results
+    public Result(double value) {
+        this.value = value;
+        this.type = ResultType.NUMBER;
+    }
+    
+    // Constructor for string results
+    public Result(String value) {
+        this.value = value;
+        this.type = ResultType.STRING;
+    }
+    
+    // Getters
+    public Object getValue() { return value; }
+    public ResultType getType() { return type; }
+    
+    public boolean isNumber() { return type == ResultType.NUMBER; }
+    public boolean isString() { return type == ResultType.STRING; }
+    
+    public double asNumber() {
+        if (isNumber()) {
+            return (Double) value;
+        }
+        throw new RuntimeException("Result is not a number");
+    }
+    
+    public String asString() {
+        if (isString()) {
+            return (String) value;
+        }
+        return value.toString(); // Convert number to string
+    }
+    
+    @Override
+    public String toString() {
+        if (isString()) {
+            return "\"" + value + "\"";
+        }
+        return value.toString();
     }
 }
 
@@ -1053,7 +1169,7 @@ class VariableNode extends ASTNode {
 /// ////////////////////////////
 class Context {
     // Existing field
-    private Map<String, Double> variables = new HashMap<>();
+    private Map<String, Object> variables = new HashMap<>();
     
     // NEW FIELDS TO ADD:
     private String displayName;           // Human-readable context name
@@ -1093,7 +1209,16 @@ class Context {
         variables.put(name, value);
     }
 
-    public Double getVariable(String name) {
+    public void setVariable(String name, String value) {
+        variables.put(name, value);
+    }
+
+    public void setVariable(String name, Object value) {
+        variables.put(name, value);
+    }
+
+    // Generic getter
+    public Object getVariable(String name) {
         // Check current context first
         if (variables.containsKey(name)) {
             return variables.get(name);
@@ -1104,34 +1229,53 @@ class Context {
             return parentContext.getVariable(name);
         }
         
-        // Variable not found anywhere in the hierarchy
         return null;
     }
-
-    public Map<String, Double> getAllVariables() {
-        Map<String, Double> allVars = new HashMap<>(variables);
+    
+    // Type-specific getters
+    public Double getVariableAsDouble(String name) {
+        Object value = getVariable(name);
+        if (value instanceof Double) {
+            return (Double) value;
+        } else if (value instanceof String) {
+            try {
+                return Double.parseDouble((String) value);
+            } catch (NumberFormatException e) {
+                return null; // Can't convert string to number
+            }
+        }
+        return null;
+    }
+    
+    public String getVariableAsString(String name) {
+        Object value = getVariable(name);
+        if (value != null) {
+            return value.toString();
+        }
+        return null;
+    }
+    
+    // Type checking methods
+    public boolean isStringVariable(String name) {
+        Object value = getVariable(name);
+        return value instanceof String;
+    }
+    
+    public boolean isNumberVariable(String name) {
+        Object value = getVariable(name);
+        return value instanceof Double || value instanceof Integer;
+    }
+    
+    public Map<String, Object> getAllVariables() {
+        Map<String, Object> allVars = new HashMap<>(variables);
         if (hasParent()) {
-            // Include parent variables (but don't override local ones)
-            Map<String, Double> parentVars = parentContext.getAllVariables();
-            for (Map.Entry<String, Double> entry : parentVars.entrySet()) {
+            Map<String, Object> parentVars = parentContext.getAllVariables();
+            for (Map.Entry<String, Object> entry : parentVars.entrySet()) {
                 allVars.putIfAbsent(entry.getKey(), entry.getValue());
             }
         }
         return allVars;
     }
-    
-    // @Override
-    // public Map<String, Integer> getAllVariables() {
-    //     Map<String, Integer> allVars = new HashMap<>(variables);
-    //     if (hasParent()) {
-    //         // Include parent variables (but don't override local ones)
-    //         Map<String, Integer> parentVars = parentContext.getAllVariables();
-    //         for (Map.Entry<String, Integer> entry : parentVars.entrySet()) {
-    //             allVars.putIfAbsent(entry.getKey(), entry.getValue());
-    //         }
-    //     }
-    //     return allVars;
-    // }
 
     public boolean hasVariable(String name) {
         return variables.containsKey(name) || 
@@ -1423,6 +1567,12 @@ class JarlangParser {
             advance();
             return new NumberNode(tok);
         } 
+
+        // CASE 1.25: String literal (NEW!)
+        else if (tok != null && CONSTANTS.TT_STRING.equals(tok.getType())) {
+            advance();
+            return new StringNode(tok);
+        }
 
         // CASE 1.5: Pi constant
         else if (tok != null && CONSTANTS.TT_PI.equals(tok.getType())) {

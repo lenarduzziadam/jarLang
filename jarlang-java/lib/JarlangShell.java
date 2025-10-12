@@ -77,39 +77,6 @@ public class JarlangShell {
                     continue;
                 }
 
-                // Test variable scoping
-                if (input.equals("!scope")) {
-                    Context global = new Context("global");
-                    global.setVariable("health", 100.0);
-                    global.setVariable("maxHealth", 150.0);
-                    
-                    Context local = new Context("function:battle", global, new Position(1, 1, 1));
-                    local.setVariable("damage", 25.0);
-                    local.setVariable("armor", 5.0);
-                    
-                    System.out.println("Global context: " + global.getDisplayName());
-                    System.out.println("  health = " + global.getVariable("health"));
-                    System.out.println("  maxHealth = " + global.getVariable("maxHealth"));
-                    
-                    System.out.println("Local context: " + local.getDisplayName());
-                    System.out.println("  damage = " + local.getVariable("damage"));
-                    System.out.println("  armor = " + local.getVariable("armor"));
-                    System.out.println("  health (inherited) = " + local.getVariable("health"));
-                    
-                    // Test calculations
-                    System.out.println("\n=== Combat Calculations ===");
-                    double health = local.getVariable("health");
-                    double damage = local.getVariable("damage");
-                    double armor = local.getVariable("armor");
-                    
-                    double actualDamage = damage - armor;
-                    double newHealth = health - actualDamage;
-                    
-                    System.out.println("damage - armor = " + actualDamage + " (actual damage)");
-                    System.out.println("health - actualDamage = " + newHealth + " (new health)");
-                    continue;
-                }
-
                 // Test context hierarchy
                 if (input.equals("!hierarchy")) {
                     Context root = new Context("root");
@@ -123,31 +90,6 @@ public class JarlangShell {
                     continue;
                 }
 
-                if (input.equals("!calc")) {
-                    Context calc = new Context("calculator");
-                    
-                    // Pre-populate with some warrior-themed variables
-                    calc.setVariable("strength", 50.0);
-                    calc.setVariable("defense", 20.0);
-                    calc.setVariable("speed", 30.0);
-                    calc.setVariable("health", 100.0);
-                    calc.setVariable("mana", 75.0);
-                    
-                    System.out.println("=== Warrior Calculator ===");
-                    System.out.println("Available variables:");
-                    System.out.println("  strength = 50");
-                    System.out.println("  defense = 20"); 
-                    System.out.println("  speed = 30");
-                    System.out.println("  health = 100");
-                    System.out.println("  mana = 75");
-                    
-                    System.out.println("\nSample calculations:");
-                    System.out.println("  health - defense = " + (calc.getVariable("health") - calc.getVariable("defense")));
-                    System.out.println("  strength * 2 = " + (calc.getVariable("strength") * 2));
-                    System.out.println("  mana + health = " + (calc.getVariable("mana") + calc.getVariable("health")));
-                    System.out.println("  strength - speed = " + (calc.getVariable("strength") - calc.getVariable("speed")));
-                    continue;
-                }
                 // Test specific token types
                 if (input.equals("!tokentest")) {
                     String[] testInputs = {
@@ -175,12 +117,22 @@ public class JarlangShell {
                 if (input.equals("!vars")) {
                     if (globalContext != null) {
                         System.out.println("=== Current Variables ===");
-                        // You'll need to add getAllVariables() method to Context
-                        for (Map.Entry<String, Double> entry : globalContext.getAllVariables().entrySet()) {
-                            System.out.println("  " + entry.getKey() + " = " + entry.getValue());
+                        Map<String, Object> allVars = globalContext.getAllVariables();
+                        if (allVars.isEmpty()) {
+                            System.out.println("  No variables wielded yet.");
+                        } else {
+                            for (Map.Entry<String, Object> entry : allVars.entrySet()) {
+                                Object value = entry.getValue();
+                                String type = value instanceof String ? "string" : "number";
+                                if (value instanceof String) {
+                                    System.out.println("  " + entry.getKey() + " = \"" + value + "\" (" + type + ")");
+                                } else {
+                                    System.out.println("  " + entry.getKey() + " = " + value + " (" + type + ")");
+                                }
+                            }
                         }
                     } else {
-                        System.out.println("No variables wielded yet.");
+                        System.out.println("No global context available.");
                     }
                     continue;
                 }
@@ -214,13 +166,20 @@ public class JarlangShell {
             ASTNode ast = parse(tokens);
             if (ast != null) {
                 System.out.println("AST: " + ast.toString());
+
+                // Evaluate/Interpret - now returns Result object
+                Result result = interpret(ast);
                 
-                // Evaluate/Interpret
-                double result = interpret(ast);
-                System.out.println("Result: " + formatResult(result));
+                /// Display result based on type
+                if (result.isString()) {
+                    System.out.println("Result: " + result.asString());
+                } else {
+                    System.out.println("Result: " + formatResult(result.asNumber()));
+                }
+                
                 System.out.println("JarKnight: Successfully evaluated!");
             }
-            
+                
         } catch (LexerException e) {
             System.err.println("JarKnight Ashamed: " + e.getMessage());
         } catch (ParserException e) {
@@ -258,9 +217,31 @@ public class JarlangShell {
     /**
      * Interpret/evaluate AST
      */
-    private double interpret(ASTNode ast) throws InterpreterException {
+    /**
+     * Interpret/evaluate AST with unified result handling
+     */
+    private Result interpret(ASTNode ast) throws InterpreterException {
         try {
-            return JarlangRunners.runInterpreter(ast, globalContext);
+            // Check if this is a string variable lookup
+            if (ast instanceof VariableNode) {
+                VariableNode varNode = (VariableNode) ast;
+                Object value = globalContext.getVariable(varNode.getVarName());
+                
+                if (value == null) {
+                    throw new InterpreterException("Undefined variable: " + varNode.getVarName());
+                }
+                
+                if (value instanceof String) {
+                    return new Result((String) value);
+                } else {
+                    return new Result((Double) value);
+                }
+            }
+            
+            // For all other expressions, evaluate as number
+            double numResult = JarlangRunners.runInterpreter(ast, globalContext);
+            return new Result(numResult);
+            
         } catch (InterpreterError e) {
             throw new InterpreterException(e.toString());
         }
