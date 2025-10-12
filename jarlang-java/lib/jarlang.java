@@ -1110,6 +1110,49 @@ class StringNode extends ASTNode {
 }
 
 /**
+ * AST node for print statements: chant expression
+ */
+class ChantNode extends ASTNode {
+    private ASTNode expression;
+    
+    public ChantNode(ASTNode expression) {
+        this.expression = expression;
+    }
+    
+    public ASTNode getExpression() { return expression; }
+    
+    @Override
+    public double evaluate(Context context) throws InterpreterError {
+        // Check if expression is a string or numeric
+        if (expression instanceof StringNode) {
+            StringNode stringNode = (StringNode) expression;
+            String output = stringNode.evaluateAsString(context);
+            System.out.println(output);
+        } else if (expression instanceof VariableNode) {
+            VariableNode varNode = (VariableNode) expression;
+            Object value = context.getVariable(varNode.getVarName());
+            if (value instanceof String) {
+                System.out.println(value);
+            } else {
+                System.out.println(value.toString());
+            }
+        } else {
+            // Numeric expression
+            double result = expression.evaluate(context);
+            System.out.println(result);
+        }
+        return 0.0; // Print statements don't return meaningful values
+    }
+    
+    @Override
+    public String getNodeType() { return "chant"; }
+    
+    @Override
+    public String toString() {
+        return "(chant " + expression.toString() + ")";
+    }
+}
+/**
  * Unified result type that can hold either numeric or string values
  */
 class Result {
@@ -1382,6 +1425,12 @@ class JarlangParser {
 
     // Add new statement parsing method:
     private ASTNode statement() throws SyntaxError {
+
+        // Check for chant statement: chant expression
+        if (currentToken != null && "chant".equals(currentToken.getType())) {
+            return chantStatement();
+        }
+
         // Check for assignment: wield identifier expression
         if (currentToken != null && "wield".equals(currentToken.getType())) {
             return assignment();
@@ -1389,6 +1438,17 @@ class JarlangParser {
         
         // Otherwise, parse as expression
         return expr();
+    }
+
+    // Add chant parsing method:
+    private ASTNode chantStatement() throws SyntaxError {
+        // Consume 'chant' keyword
+        advance();
+        
+        // Parse the expression to print
+        ASTNode expression = expr();
+        
+        return new ChantNode(expression);
     }
 
     // Add assignment parsing method:
