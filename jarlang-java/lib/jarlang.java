@@ -920,6 +920,21 @@ class BinOpNode extends ASTNode {
             }
         } else if (CONSTANTS.TT_POW.equals(opType)) {
             return Math.pow(leftVal, rightVal);
+        
+        // Comparison operators for future extensions
+        } else if (CONSTANTS.TT_EE.equals(opType)) {
+            return (leftVal == rightVal) ? 1.0 : 0.0;  // "evermore"
+        } else if (CONSTANTS.TT_NE.equals(opType)) {
+            return (leftVal != rightVal) ? 1.0 : 0.0;  // "never"
+        } else if (CONSTANTS.TT_LT.equals(opType)) {
+            return (leftVal < rightVal) ? 1.0 : 0.0;   // "lessen"
+        } else if (CONSTANTS.TT_GT.equals(opType)) {
+            return (leftVal > rightVal) ? 1.0 : 0.0;   // "heighten"
+        } else if (CONSTANTS.TT_LE.equals(opType)) {
+            return (leftVal <= rightVal) ? 1.0 : 0.0;  // "atmost"
+        } else if (CONSTANTS.TT_GE.equals(opType)) {
+            return (leftVal >= rightVal) ? 1.0 : 0.0;  // "atleast"
+            
         } else {
             throw new InterpreterError("Unknown operator: " + opType);
         }
@@ -1174,6 +1189,33 @@ class ChantNode extends ASTNode {
     @Override
     public String toString() {
         return "(chant " + expression.toString() + ")";
+    }
+}
+
+/**
+ * AST node for boolean values: true/false results from comparisons
+ */
+class BooleanNode extends ASTNode {
+    private boolean value;
+    
+    public BooleanNode(boolean value) {
+        this.value = value;
+    }
+    
+    public boolean getValue() { return value; }
+    
+    @Override
+    public double evaluate(Context context) throws InterpreterError {
+        // Convert boolean to numeric: true = 1.0, false = 0.0
+        return value ? 1.0 : 0.0;
+    }
+    
+    @Override
+    public String getNodeType() { return "boolean"; }
+    
+    @Override
+    public String toString() {
+        return String.valueOf(value);
     }
 }
 /**
