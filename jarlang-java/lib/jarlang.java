@@ -468,20 +468,44 @@ class JarlangLexer {
             
             // COMPARISON OPERATORS - for future language extensions
             else if ("=".equals(currentChar)) {
-                tokens.add(new Token(CONSTANTS.TT_EQ, currentChar));      // "bind"
                 advance();
+                if ("=".equals(currentChar)) {
+                    tokens.add(new Token(CONSTANTS.TT_EE, "=="));      // "evermore"
+                    advance();
+                } else {
+                    tokens.add(new Token(CONSTANTS.TT_EQ, "="));      // "bind"
+                }
             }
             else if ("!".equals(currentChar)) {
-                tokens.add(new Token(CONSTANTS.TT_NE, currentChar));      // "differ"
-                advance();
+                advance(); // Move past '!'
+                if ("=".equals(currentChar)) {
+                    // Found "!="
+                    advance(); // Move past '='
+                    tokens.add(new Token(CONSTANTS.TT_NE, "!="));
+                } else {
+                    // Just single "!" (logical not)
+                    tokens.add(new Token(CONSTANTS.TT_NOT, "!"));
+                }
             }
             else if ("<".equals(currentChar)) {
-                tokens.add(new Token(CONSTANTS.TT_LT, currentChar));      // "lessen"
-                advance();
+                advance();      // "lessen"
+                if("=".equals(currentChar)) {
+                    tokens.add(new Token(CONSTANTS.TT_LE, "<="));      // "atmost"
+                    advance();
+                } else {
+                    // Just single "<"
+                    tokens.add(new Token(CONSTANTS.TT_LT, "<"));
+                }
             }
             else if (">".equals(currentChar)) {
-                tokens.add(new Token(CONSTANTS.TT_GT, currentChar));      // "heighten"
-                advance();
+                advance();      // "heighten"
+                if("=".equals(currentChar)) {
+                    tokens.add(new Token(CONSTANTS.TT_GE, ">="));      // "atleast"
+                    advance();
+                } else {
+                    // Just single ">"
+                    tokens.add(new Token(CONSTANTS.TT_GT, ">"));
+                }
             }
             
             // PUNCTUATION AND DELIMITERS - for structured programming
