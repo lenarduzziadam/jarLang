@@ -923,17 +923,17 @@ class BinOpNode extends ASTNode {
         
         // Comparison operators for future extensions
         } else if (CONSTANTS.TT_EE.equals(opType)) {
-            return (leftVal == rightVal) ? 0.0 : 1.0;  // "evermore"
+            return (leftVal == rightVal) ? 1.0 : 0.0;  // "evermore"
         } else if (CONSTANTS.TT_NE.equals(opType)) {
-            return (leftVal != rightVal) ? 0.0 : 1.0;  // "never"
+            return (leftVal != rightVal) ? 1.0 : 0.0;  // "never"
         } else if (CONSTANTS.TT_LT.equals(opType)) {
-            return (leftVal < rightVal) ? 0.0 : 1.0;   // "lessen"
+            return (leftVal < rightVal) ? 1.0 : 0.0;   // "lessen"
         } else if (CONSTANTS.TT_GT.equals(opType)) {
-            return (leftVal > rightVal) ? 0.0 : 1.0;   // "heighten"
+            return (leftVal > rightVal) ? 1.0 : 0.0;   // "heighten"
         } else if (CONSTANTS.TT_LE.equals(opType)) {
-            return (leftVal <= rightVal) ? 0.0 : 1.0;  // "atmost"
+            return (leftVal <= rightVal) ? 1.0 : 0.0;  // "atmost"
         } else if (CONSTANTS.TT_GE.equals(opType)) {
-            return (leftVal >= rightVal) ? 0.0 : 1.0;  // "atleast"
+            return (leftVal >= rightVal) ? 1.0 : 0.0;  // "atleast"
 
         } else {
             throw new InterpreterError("Unknown operator: " + opType);
@@ -1003,7 +1003,7 @@ class UnaryOpNode extends ASTNode {
         } else if (CONSTANTS.TT_PLUS.equals(opType)) {
             return value;
         } else if (CONSTANTS.TT_NOT.equals(opType)) {
-            return (value == 1.0) ? 0.0 : 1.0;  // Logical NOT: 1 -> 0, 0 -> 1
+            return (value == .0) ? 1.0 : 0.0;  // Logical NOT: 1 -> 0, 0 -> 1
         } else {
             throw new InterpreterError("Unknown unary operator: " + opType);
         }
@@ -1208,8 +1208,8 @@ class BooleanNode extends ASTNode {
     
     @Override
     public double evaluate(Context context) throws InterpreterError {
-        // Convert boolean to numeric: true = 0.0, false = 1.0
-        return value ? 0.0 : 1.0;
+        // Convert boolean to numeric: true = 1.0, false = 0.0
+        return value ? 1.0 : 0.0;
     }
     
     @Override
@@ -1218,6 +1218,101 @@ class BooleanNode extends ASTNode {
     @Override
     public String toString() {
         return String.valueOf(value);
+    }
+}
+
+/**
+ * AST node for if statements: judge condition expression orjudge expression
+ */
+class IfNode extends ASTNode {
+    private ASTNode condition;    // The condition to test
+    private ASTNode thenBranch;   // Expression to execute if condition is true
+    private ASTNode elseBranch;   // Expression to execute if condition is false (optional)
+    
+    // Constructor with else branch
+    public IfNode(ASTNode condition, ASTNode thenBranch, ASTNode elseBranch) {
+        this.condition = condition;
+        this.thenBranch = thenBranch;
+        this.elseBranch = elseBranch;
+    }
+    
+    // Constructor without else branch
+    public IfNode(ASTNode condition, ASTNode thenBranch) {
+        this.condition = condition;
+        this.thenBranch = thenBranch;
+        this.elseBranch = null;
+    }
+    
+    public ASTNode getCondition() { return condition; }
+    public ASTNode getThenBranch() { return thenBranch; }
+    public ASTNode getElseBranch() { return elseBranch; }
+    public boolean hasElseBranch() { return elseBranch != null; }
+    
+    @Override
+    public double evaluate(Context context) throws InterpreterError {
+        // Evaluate condition
+        double conditionValue = condition.evaluate(context);
+        
+        // In Jarlang, 0.0 is false, anything else is true
+        if (conditionValue != 0.0) {
+            // Condition is true, execute then branch
+            return thenBranch.evaluate(context);
+        } else if (hasElseBranch()) {
+            // Condition is false and we have an else branch
+            return elseBranch.evaluate(context);
+        } else {
+            // Condition is false and no else branch
+            return 0.0; // Default return value
+        }
+    }
+    
+    @Override
+    public String getNodeType() { return "if"; }
+    
+    @Override
+    public String toString() {
+        if (hasElseBranch()) {
+            return "(judge " + condition.toString() + " " + thenBranch.toString() + 
+                   " orjudge " + elseBranch.toString() + ")";
+        } else {
+            return "(judge " + condition.toString() + " " + thenBranch.toString() + ")";
+        }
+    }
+}
+
+/**
+ * AST node for while loops: lest condition expression
+ */
+class WhileNode extends ASTNode {
+    private ASTNode condition;    // The condition to test
+    private ASTNode body;         // Expression to execute while condition is true
+    
+    public WhileNode(ASTNode condition, ASTNode body) {
+        this.condition = condition;
+        this.body = body;
+    }
+    
+    public ASTNode getCondition() { return condition; }
+    public ASTNode getBody() { return body; }
+    
+    @Override
+    public double evaluate(Context context) throws InterpreterError {
+        double lastResult = 0.0;
+        
+        // Keep executing while condition is true (non-zero)
+        while (condition.evaluate(context) != 0.0) {
+            lastResult = body.evaluate(context);
+        }
+        
+        return lastResult; // Return result of last iteration
+    }
+    
+    @Override
+    public String getNodeType() { return "while"; }
+    
+    @Override
+    public String toString() {
+        return "(lest " + condition.toString() + " " + body.toString() + ")";
     }
 }
 /**
@@ -1494,6 +1589,16 @@ class JarlangParser {
     // Add new statement parsing method:
     private ASTNode statement() throws SyntaxError {
 
+        // Check for if statement: if condition then expression [else expression]
+        if (currentToken != null && "judge".equals(currentToken.getType())) {
+            return ifStatement();
+        }
+
+        // Check for while statement: lest condition expression
+        if (currentToken != null && "lest".equals(currentToken.getType())) {
+            return whileStatement();
+        }
+
         // Check for chant statement: chant expression
         if (currentToken != null && "chant".equals(currentToken.getType())) {
             return chantStatement();
@@ -1503,9 +1608,55 @@ class JarlangParser {
         if (currentToken != null && "wield".equals(currentToken.getType())) {
             return assignment();
         }
+
+        // NEW: Check for variable reassignment (identifier = expression)
+        if (currentToken != null && CONSTANTS.TT_IDENTIFIER.equals(currentToken.getType())) {
+            // Look ahead to see if next token is '='
+            if (tokIdx + 1 < tokens.size() && 
+                CONSTANTS.TT_EQ.equals(tokens.get(tokIdx + 1).getType())) {
+                return assignment(); // Handle as reassignment
+            }
+            // If not followed by '=', fall through to expression parsing
+        }
         
         // Otherwise, parse as expression
         return expr();
+    }
+
+    // Add if statement parsing method:
+    private ASTNode ifStatement() throws SyntaxError {
+        // Consume 'judge' keyword
+        advance();
+        
+        // Parse the condition
+        ASTNode condition = expr();
+        
+        // Parse the then branch
+        ASTNode thenBranch = statement();
+        
+        // Check for optional 'orjudge' (else)
+        if (currentToken != null && "orjudge".equals(currentToken.getType())) {
+            advance(); // Consume 'orjudge'
+            ASTNode elseBranch = statement();
+            return new IfNode(condition, thenBranch, elseBranch);
+        } else {
+            // No else branch
+            return new IfNode(condition, thenBranch);
+        }
+    }
+
+    // Add while statement parsing method:
+    private ASTNode whileStatement() throws SyntaxError {
+        // Consume 'lest' keyword
+        advance();
+        
+        // Parse the condition
+        ASTNode condition = expr();
+        
+        // Parse the body
+        ASTNode body = statement();
+        
+        return new WhileNode(condition, body);
     }
 
     // Add chant parsing method:
@@ -1521,17 +1672,34 @@ class JarlangParser {
 
     // Add assignment parsing method:
     private ASTNode assignment() throws SyntaxError {
-        // Consume 'wield' keyword
-        advance();
-        
-        // Expect identifier (variable name)
-        if (currentToken == null || !CONSTANTS.TT_IDENTIFIER.equals(currentToken.getType())) {
-            throw new SyntaxError("Expected variable name after 'wield'", "at token position " + tokIdx);
+        String varName;
+
+        // Check if it's a 'wield' (new variable) or identifier (reassignment)
+        if (currentToken != null && "wield".equals(currentToken.getType())) {
+            // New variable declaration: wield varName expression
+            advance(); // Consume 'wield'
+            
+            if (currentToken == null || !CONSTANTS.TT_IDENTIFIER.equals(currentToken.getType())) {
+                throw new SyntaxError("Expected variable name after 'wield'", "at token position " + tokIdx);
+            }
+            
+            varName = currentToken.getValue();
+            advance(); // Consume identifier
+            
+        } else if (currentToken != null && CONSTANTS.TT_IDENTIFIER.equals(currentToken.getType())) {
+            // Reassignment: varName = expression
+            varName = currentToken.getValue();
+            advance(); // Consume identifier
+            
+            // Expect '=' token
+            if (currentToken == null || !CONSTANTS.TT_EQ.equals(currentToken.getType())) {
+                throw new SyntaxError("Expected '=' after variable name", "at token position " + tokIdx);
+            }
+            advance(); // Consume '='
+            
+        } else {
+            throw new SyntaxError("Expected 'wield' or variable name", "at token position " + tokIdx);
         }
-        
-        String varName = currentToken.getValue();
-        advance(); // Consume identifier
-        
         // Parse the value expression
         ASTNode value = expr();
         
