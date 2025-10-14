@@ -1315,6 +1315,44 @@ class WhileNode extends ASTNode {
         return "(lest " + condition.toString() + " " + body.toString() + ")";
     }
 }
+
+/**
+ * AST node for block statements: gather statement1 statement2 ... disperse
+ */
+class BlockNode extends ASTNode {
+    private List<ASTNode> statements;
+    
+    public BlockNode(List<ASTNode> statements) {
+        this.statements = new ArrayList<>(statements);
+    }
+    
+    public List<ASTNode> getStatements() { return statements; }
+    
+    @Override
+    public double evaluate(Context context) throws InterpreterError {
+        double lastResult = 0.0;
+        
+        // Execute all statements in sequence
+        for (ASTNode statement : statements) {
+            lastResult = statement.evaluate(context);
+        }
+        
+        return lastResult; // Return result of last statement
+    }
+    
+    @Override
+    public String getNodeType() { return "block"; }
+    
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("(gather ");
+        for (ASTNode stmt : statements) {
+            sb.append(stmt.toString()).append(" ");
+        }
+        sb.append("disperse)");
+        return sb.toString();
+    }
+}
 /**
  * Unified result type that can hold either numeric or string values
  */
@@ -1618,7 +1656,7 @@ class JarlangParser {
             }
             // If not followed by '=', fall through to expression parsing
         }
-        
+
         // Otherwise, parse as expression
         return expr();
     }
@@ -1912,21 +1950,42 @@ class JarlangParser {
             return new VariableNode(tok.getValue());
         }
 
-        // CASE 6: Parenthesized expression
+        // CASE 6: Parenthesized expression OR block statement
         else if (tok != null && CONSTANTS.TT_LPAREN.equals(tok.getType())) {
-            advance();
-            ASTNode node = expr();
+            advance(); // Consume '('
+            
+            // Parse statements until we hit ')'
+            List<ASTNode> statements = new ArrayList<>();
+            
+            // Parse statements until we hit ')'
+            while (currentToken != null && !CONSTANTS.TT_RPAREN.equals(currentToken.getType())) {
+                statements.add(statement());  // ✅ Use statement() not expr()
+            }
             
             if (currentToken != null && CONSTANTS.TT_RPAREN.equals(currentToken.getType())) {
-                advance();
-                return node;
+                advance(); // Consume ')'
+                
+                if (statements.size() == 1) {
+                    // Single statement/expression - return as-is
+                    return statements.get(0);
+                } else if (statements.size() > 1) {
+                    // Multiple statements - wrap in block
+                    return new BlockNode(statements);
+                } else {
+                    // Empty parentheses
+                    return new NumberNode("0"); // Return 0 for empty blocks
+                }
             } else {
                 throw new SyntaxError("Expected ')'", "at token position " + tokIdx);
             }
-        } 
-        // CASE 7: Invalid factor
+        }
+        // ✅ ADD: Final catch-all case for invalid tokens
         else {
-            throw new SyntaxError("Expected int, float, identifier, or '('", "at token position " + tokIdx);
+            if (tok != null) {
+                throw new SyntaxError("Expected int, float, identifier, or '(' but found: " + tok.getType(), "at token position " + tokIdx);
+            } else {
+                throw new SyntaxError("Unexpected end of input", "at token position " + tokIdx);
+            }
         }
     }
 }
