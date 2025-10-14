@@ -923,18 +923,18 @@ class BinOpNode extends ASTNode {
         
         // Comparison operators for future extensions
         } else if (CONSTANTS.TT_EE.equals(opType)) {
-            return (leftVal == rightVal) ? 1.0 : 0.0;  // "evermore"
+            return (leftVal == rightVal) ? 0.0 : 1.0;  // "evermore"
         } else if (CONSTANTS.TT_NE.equals(opType)) {
-            return (leftVal != rightVal) ? 1.0 : 0.0;  // "never"
+            return (leftVal != rightVal) ? 0.0 : 1.0;  // "never"
         } else if (CONSTANTS.TT_LT.equals(opType)) {
-            return (leftVal < rightVal) ? 1.0 : 0.0;   // "lessen"
+            return (leftVal < rightVal) ? 0.0 : 1.0;   // "lessen"
         } else if (CONSTANTS.TT_GT.equals(opType)) {
-            return (leftVal > rightVal) ? 1.0 : 0.0;   // "heighten"
+            return (leftVal > rightVal) ? 0.0 : 1.0;   // "heighten"
         } else if (CONSTANTS.TT_LE.equals(opType)) {
-            return (leftVal <= rightVal) ? 1.0 : 0.0;  // "atmost"
+            return (leftVal <= rightVal) ? 0.0 : 1.0;  // "atmost"
         } else if (CONSTANTS.TT_GE.equals(opType)) {
-            return (leftVal >= rightVal) ? 1.0 : 0.0;  // "atleast"
-            
+            return (leftVal >= rightVal) ? 0.0 : 1.0;  // "atleast"
+
         } else {
             throw new InterpreterError("Unknown operator: " + opType);
         }
@@ -1002,6 +1002,8 @@ class UnaryOpNode extends ASTNode {
             return -value;
         } else if (CONSTANTS.TT_PLUS.equals(opType)) {
             return value;
+        } else if (CONSTANTS.TT_NOT.equals(opType)) {
+            return (value == 1.0) ? 0.0 : 1.0;  // Logical NOT: 1 -> 0, 0 -> 1
         } else {
             throw new InterpreterError("Unknown unary operator: " + opType);
         }
@@ -1206,8 +1208,8 @@ class BooleanNode extends ASTNode {
     
     @Override
     public double evaluate(Context context) throws InterpreterError {
-        // Convert boolean to numeric: true = 1.0, false = 0.0
-        return value ? 1.0 : 0.0;
+        // Convert boolean to numeric: true = 0.0, false = 1.0
+        return value ? 0.0 : 1.0;
     }
     
     @Override
@@ -1558,20 +1560,49 @@ class JarlangParser {
      * @return AST node representing the parsed expression
      * @throws SyntaxError if expression is malformed
      */
+
+    // Update expr() to call comparison instead of term
     private ASTNode expr() throws SyntaxError {
+        return comparison();  // Start with comparison level
+    }
+    // changed expr() to call comparison()
+    private ASTNode comparison() throws SyntaxError {
+        ASTNode leftNode = addSub();  // Start with higher-precedence term
+        
+        // Handle zero or more addition/subtraction operations
+        while (currentToken != null && 
+               (CONSTANTS.TT_EE.equals(currentToken.getType()) ||     // "=="
+                CONSTANTS.TT_NE.equals(currentToken.getType()) ||     // "!="
+                CONSTANTS.TT_LT.equals(currentToken.getType()) ||     // "<"
+                CONSTANTS.TT_GT.equals(currentToken.getType()) ||     // ">"
+                CONSTANTS.TT_LE.equals(currentToken.getType()) ||     // "<="
+                CONSTANTS.TT_GE.equals(currentToken.getType()))) { // ">="
+            
+            Token opToken = currentToken;  // Save the operator
+            advance();                     // Move past operator
+
+            ASTNode rightNode = addSub();  // Parse right operand
+
+            // Create binary operation node (now supports any ASTNode types)
+            leftNode = new BinOpNode(leftNode, opToken, rightNode);
+        }
+        
+        return leftNode;
+    }
+
+    //added addSub() method which was original expr() method easier refactoring
+    private ASTNode addSub() throws SyntaxError {
         ASTNode leftNode = term();  // Start with higher-precedence term
         
         // Handle zero or more addition/subtraction operations
         while (currentToken != null && 
-               (CONSTANTS.TT_PLUS.equals(currentToken.getType()) ||   // "commune"
+            (CONSTANTS.TT_PLUS.equals(currentToken.getType()) ||   // "commune"
                 CONSTANTS.TT_MINUS.equals(currentToken.getType()))) { // "banish"
             
-            Token opToken = currentToken;  // Save the operator
-            advance();                     // Move past operator
+            Token opToken = currentToken;
+            advance();
             
-            ASTNode rightNode = term();    // Parse right operand
-            
-            // Create binary operation node (now supports any ASTNode types)
+            ASTNode rightNode = term();
             leftNode = new BinOpNode(leftNode, opToken, rightNode);
         }
         
@@ -1679,40 +1710,41 @@ class JarlangParser {
     private ASTNode factor() throws SyntaxError {
         Token tok = currentToken;
 
-        // CASE 0: Unary operators
+        // CASE 1: Unary operators
         if (tok != null && (CONSTANTS.TT_MINUS.equals(tok.getType()) || 
-                        CONSTANTS.TT_PLUS.equals(tok.getType()))) {
+                        CONSTANTS.TT_PLUS.equals(tok.getType()) ||
+                        CONSTANTS.TT_NOT.equals(tok.getType()))) {
             advance();
             ASTNode factorNode = factor();
             return new UnaryOpNode(tok, factorNode);
         }
         
-        // CASE 1: Numeric literal
+        // CASE 2: Numeric literal
         if (tok != null && (CONSTANTS.TT_INT.equals(tok.getType()) || 
                         CONSTANTS.TT_FLOAT.equals(tok.getType()))) {
             advance();
             return new NumberNode(tok);
         } 
 
-        // CASE 1.25: String literal (NEW!)
+        // CASE 3: String literal (NEW!)
         else if (tok != null && CONSTANTS.TT_STRING.equals(tok.getType())) {
             advance();
             return new StringNode(tok);
         }
 
-        // CASE 1.5: Pi constant
+        // CASE 4: Pi constant
         else if (tok != null && CONSTANTS.TT_PI.equals(tok.getType())) {
             advance();
             return new NumberNode(tok);
         }
 
-        // CASE 1.75: Variable lookup (NEW!)
+        // CASE 5: Variable lookup (NEW!)
         else if (tok != null && CONSTANTS.TT_IDENTIFIER.equals(tok.getType())) {
             advance();
             return new VariableNode(tok.getValue());
         }
 
-        // CASE 2: Parenthesized expression
+        // CASE 6: Parenthesized expression
         else if (tok != null && CONSTANTS.TT_LPAREN.equals(tok.getType())) {
             advance();
             ASTNode node = expr();
@@ -1724,7 +1756,7 @@ class JarlangParser {
                 throw new SyntaxError("Expected ')'", "at token position " + tokIdx);
             }
         } 
-        // CASE 3: Invalid factor
+        // CASE 7: Invalid factor
         else {
             throw new SyntaxError("Expected int, float, identifier, or '('", "at token position " + tokIdx);
         }
