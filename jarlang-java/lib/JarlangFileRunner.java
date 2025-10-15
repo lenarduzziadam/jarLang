@@ -49,7 +49,7 @@ public class JarlangFileRunner {
                     
                     // Only show results for expressions (not statements like chant)
                     if (result.isNumber() && result.asNumber() != 0.0) {
-                        output.append("Line ").append(lineNumber).append(" → ").append(result.asNumber()).append("\n");
+                        output.append("Line ").append(lineNumber).append(" → ").append("number").append(" = ").append(result.asNumber()).append("\n");
                     }
                     
                 } catch (Exception e) {
