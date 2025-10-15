@@ -1979,7 +1979,7 @@ class JarlangParser {
                 throw new SyntaxError("Expected ')'", "at token position " + tokIdx);
             }
         }
-        // ✅ ADD: Final catch-all case for invalid tokens
+        // CASE 7: Invalid token for factor
         else {
             if (tok != null) {
                 throw new SyntaxError("Expected int, float, identifier, or '(' but found: " + tok.getType(), "at token position " + tokIdx);
