@@ -21,7 +21,7 @@ chant combatPower
 
 # Simulate battle
 chant "=== Battle Simulation ==="
-wield enemyAttack 30
+wield enemyAttack 115
 wield actualDamage enemyAttack - armor
 
 judge actualDamage > 0 chant "Enemy hits for damage!" orjudge chant "Armor blocked the attack!"
