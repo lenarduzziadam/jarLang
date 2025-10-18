@@ -1,0 +1,37 @@
+# Warrior's Quest - A Jarlang Adventure
+chant "=== Welcome to the Warrior's Quest ==="
+
+# Set up warrior stats
+wield health 100
+wield damage 25
+wield armor 15
+
+chant "Initial warrior stats:"
+chant "Health:"
+chant health
+chant "Damage:"
+chant damage
+chant "Armor:"
+chant armor
+
+# Calculate total combat power
+wield combatPower damage * 2 + armor
+chant "Combat power:"
+chant combatPower
+
+# Simulate battle
+chant "=== Battle Simulation ==="
+wield enemyAttack 115
+wield actualDamage enemyAttack - armor
+
+judge actualDamage > 0 chant "Enemy hits for damage!" orjudge chant "Armor blocked the attack!"
+
+# Update health
+health = health - actualDamage
+chant "Health after battle:"
+chant health
+
+# Check if warrior survives
+judge health > 0 chant "Warrior survives the battle!" orjudge chant "Warrior has fallen..."
+
+chant "=== Quest Complete ==="

@@ -136,6 +136,29 @@ public class JarlangShell {
                     }
                     continue;
                 }
+
+                // Handle file execution
+                if (input.startsWith("!run ")) {
+                    handleFileCommand(input);
+                    continue;
+                }
+
+                // Handle help command
+                if (input.equals("!helpRun")) {
+                    displayHelp();
+                    continue;
+                }
+
+                // Your existing commands:
+                if (input.equals("!vars")) {
+                    // ... existing vars code
+                    continue;
+                }
+
+                if (input.startsWith("!tokens ")) {
+                    // ... existing tokens code  
+                    continue;
+                }
                 // Process expression
                 if (!input.isEmpty()) {
                     processExpression(input);
@@ -360,6 +383,67 @@ public class JarlangShell {
             }
             System.out.println();
         }
+    }
+
+    /**
+     * Execute a Jarlang source file
+     */
+    private void executeFile(String filepath) {
+        // Validate file extension
+        if (!filepath.endsWith(".vase") && !filepath.endsWith(".pot")) {
+            System.err.println("❌ Invalid file type. Jarlang files must have .vase or .pot extension");
+            return;
+        }
+        
+        // Check if file exists
+        java.io.File file = new java.io.File(filepath);
+        if (!file.exists()) {
+            System.err.println("❌ File not found: " + filepath);
+            return;
+        }
+        
+        // Execute the file using your JarlangFileRunner
+        JarlangFileRunner.ExecutionResult result = JarlangFileRunner.executeFile(filepath);
+        
+        // Display results
+        System.out.print(result.output);
+        
+        if (!result.success) {
+            System.err.println("❌ Execution failed: " + result.errorMessage);
+        }
+    }
+
+    /**
+     * Handle file execution commands
+     */
+    private void handleFileCommand(String input) {
+        String[] parts = input.split("\\s+");
+        
+        if (parts.length < 2) {
+            System.out.println("Usage: !run <filename.vase> or !run <filename.pot>");
+            return;
+        }
+        
+        String filename = parts[1];
+        executeFile(filename);
+    }
+
+    /**
+     * Display help information
+     */
+    private void displayHelp() {
+        System.out.println("=== Jarlang REPL Commands ===");
+        System.out.println("  Expression     - Evaluate Jarlang expression");
+        System.out.println("  !run <file>    - Execute a .vase or .pot file");
+        System.out.println("  !vars          - Show all variables");
+        System.out.println("  !scope         - Show context hierarchy");
+        System.out.println("  !tokens <expr> - Show tokenization of expression");
+        System.out.println("  !help          - Show this help");
+        System.out.println("  q!             - Quit the REPL");
+        System.out.println();
+        System.out.println("=== File Extensions ===");
+        System.out.println("  .vase          - Jarlang source files");
+        System.out.println("  .pot           - Alternative Jarlang extension");
     }
 
 }

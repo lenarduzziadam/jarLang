@@ -33,6 +33,16 @@ public class CONSTANTS {
     public static final String TT_MEND = "mend"; // Return statement
     public static final String TT_FORGE = "forge"; // Function definition
     public static final String TT_PIERCE = "pierce"; // Keyword token type
+    public static final String TT_EE = "evermore"; // == (equality operator)
+    public static final String TT_LE = "atmost"; // <= (less than or equal to) operator
+    public static final String TT_GE = "atleast"; // >= (greater than or equal to) operator
+    public static final String TT_NE = "notever"; // != (inequality operator)
+
+    //function calls idk if ill use these
+    public static final String TT_BLESS = "bless";   // Function call
+    public static final String TT_CURSE = "curse";   // Function call
+    public static final String TT_HEAL = "heal";     // Function call
+    //////////////////////////////////////////////
 
     public static final Map<String, String> KEYWORDS = Map.ofEntries(
         Map.entry("judge", TT_JUDGE),       // "judge" -> "judge"
@@ -74,7 +84,7 @@ public class CONSTANTS {
     public static final String TT_RPAREN     = "disperse";
     public static final String TT_POW        = "ascend";
     public static final String TT_EQ         = "bind";
-    public static final String TT_NE         = "differ";
+    public static final String TT_NOT         = "differ";
     public static final String TT_LT         = "lessen";
     public static final String TT_GT         = "heighten";
     
