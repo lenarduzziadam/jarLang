@@ -22,47 +22,26 @@ public class JarlangFileRunner {
     public static ExecutionResult executeFile(String filepath) {
         StringBuilder output = new StringBuilder();
         Context globalContext = new Context("file:" + filepath);
-        
+
         try {
             // Read file contents
             String content = readFile(filepath);
-            
-            // Split into statements (each line is a statement for now)
-            String[] lines = content.split("\n");
-            
+
+            // Tokenize whole file and parse into a single AST (can be a BlockNode)
+            List<Token> tokens = JarlangRunners.runLexer(filepath, content);
+            JarlangParser parser = new JarlangParser(tokens);
+            ASTNode ast = parser.parse();
+
             output.append("🏺 Executing Jarlang vase: ").append(filepath).append("\n");
             output.append("=".repeat(50)).append("\n\n");
-            
-            int lineNumber = 1;
-            for (String line : lines) {
-                line = line.trim();
-                
-                // Skip empty lines and comments
-                if (line.isEmpty() || line.startsWith("#")) {
-                    lineNumber++;
-                    continue;
-                }
-                
-                try {
-                    // Execute the line
-                    Result result = executeLine(line, globalContext);
-                    
-                    // Only show results for expressions (not statements like chant)
-                    if (result.isNumber() && result.asNumber() != 0.0) {
-                        output.append("Line ").append(lineNumber).append(" → ").append("number").append(" = ").append(result.asNumber()).append("\n");
-                    }
-                    
-                } catch (Exception e) {
-                    output.append("❌ Error on line ").append(lineNumber).append(": ").append(e.getMessage()).append("\n");
-                    return new ExecutionResult(output.toString(), false, e.getMessage());
-                }
-                
-                lineNumber++;
-            }
-            
+
+            // Interpret the entire AST in the single global context
+            double result = JarlangRunners.runInterpreter(ast, globalContext);
+
+            output.append("Result: ").append(result).append("\n");
             output.append("\n🗡️ Execution completed successfully!\n");
             return new ExecutionResult(output.toString(), true, null);
-            
+
         } catch (Exception e) {
             output.append("❌ Failed to execute file: ").append(e.getMessage()).append("\n");
             return new ExecutionResult(output.toString(), false, e.getMessage());
