@@ -1,0 +1,57 @@
+#manual testing file
+chant "Testing if output prints to screen for real for real heer yeee"
+
+wield counter 255
+lest counter > -pi {
+  chant counter;
+  counter = counter - 1;
+  judge counter == 2 chant "halfway!" orjudge counter == 1 chant "almost";
+  chant "Liguistic lexar is a cool cat as long as he can parse jarlang";
+  tale = "Congrats this has been saved many times if this message was reached";
+}
+
+chant tale;
+
+forge commune (a, b) {
+  mend a + b
+}
+forge banish (a, b) {
+  mend a - b
+}
+forge rally (a, b) {
+  mend a * b
+}
+forge slash (a, b){
+  mend a / b
+}
+forge ascend (a, b){
+  mend a ^ b
+}
+forge circle_area (r){
+  mend pi * r^2
+}
+chant ""
+wield result commune(2, 2)
+chant "obtained wonderous method commune/add below:"
+chant result #result will be 4.0
+res = banish(3,5)
+chant ""
+chant "banish/subtraction value"
+chant res
+res = rally(9,9)
+chant ""
+chant "rally/multiplier value"
+chant res
+res = slash(18,2)
+chant ""
+chant "slash/division value"
+chant res
+res = ascend(4,4)
+chant ""
+chant "ascendant value"
+chant res
+chant ""
+wield radius 7
+res = circle_area(radius)
+chant "should output circle area equation for 7 pi r ^2"
+chant res
