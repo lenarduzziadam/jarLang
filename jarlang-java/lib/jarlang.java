@@ -1224,61 +1224,53 @@ class BooleanNode extends ASTNode {
 /**
  * AST node for if statements: judge condition expression orjudge expression
  */
+// ...existing code...
 class IfNode extends ASTNode {
-    private ASTNode condition;    // The condition to test
-    private ASTNode thenBranch;   // Expression to execute if condition is true
-    private ASTNode elseBranch;   // Expression to execute if condition is false (optional)
-    
-    // Constructor with else branch
-    public IfNode(ASTNode condition, ASTNode thenBranch, ASTNode elseBranch) {
-        this.condition = condition;
-        this.thenBranch = thenBranch;
-        this.elseBranch = elseBranch;
+    private List<ASTNode> conditions = new ArrayList<>();
+    private List<ASTNode> branches = new ArrayList<>();
+
+    public IfNode() {}
+
+    public void addBranch(ASTNode condition, ASTNode branch) {
+        conditions.add(condition);
+        branches.add(branch);
     }
-    
-    // Constructor without else branch
-    public IfNode(ASTNode condition, ASTNode thenBranch) {
-        this.condition = condition;
-        this.thenBranch = thenBranch;
-        this.elseBranch = null;
-    }
-    
-    public ASTNode getCondition() { return condition; }
-    public ASTNode getThenBranch() { return thenBranch; }
-    public ASTNode getElseBranch() { return elseBranch; }
-    public boolean hasElseBranch() { return elseBranch != null; }
-    
+
     @Override
     public double evaluate(Context context) throws InterpreterError {
-        // Evaluate condition
-        double conditionValue = condition.evaluate(context);
-        
-        // In Jarlang, 0.0 is false, anything else is true
-        if (conditionValue != 0.0) {
-            // Condition is true, execute then branch
-            return thenBranch.evaluate(context);
-        } else if (hasElseBranch()) {
-            // Condition is false and we have an else branch
-            return elseBranch.evaluate(context);
-        } else {
-            // Condition is false and no else branch
-            return 0.0; // Default return value
+        for (int i = 0; i < conditions.size(); i++) {
+            ASTNode cond = conditions.get(i);
+            // null condition is treated as unconditional 'else'
+            if (cond == null) {
+                return branches.get(i).evaluate(context);
+            }
+            double cv = cond.evaluate(context);
+            // C-style: 0.0 == false, 1.0 == true
+            if (cv == 1.0) {
+                return branches.get(i).evaluate(context);
+            }
         }
+        // No branch matched -> return false value
+        return 0.0;
     }
-    
+
     @Override
-    public String getNodeType() { return "if"; }
-    
+    public String getNodeType() { return "if-elif"; }
+
     @Override
     public String toString() {
-        if (hasElseBranch()) {
-            return "(judge " + condition.toString() + " " + thenBranch.toString() + 
-                   " orjudge " + elseBranch.toString() + ")";
-        } else {
-            return "(judge " + condition.toString() + " " + thenBranch.toString() + ")";
+        StringBuilder sb = new StringBuilder("(judge ");
+        for (int i = 0; i < conditions.size(); i++) {
+            if (i > 0) sb.append(" orjudge ");
+            sb.append(conditions.get(i) == null ? "else" : conditions.get(i).toString());
+            sb.append(" ");
+            sb.append(branches.get(i).toString());
         }
+        sb.append(")");
+        return sb.toString();
     }
 }
+
 
 /**
  * AST node for while loops: lest condition expression
@@ -1474,6 +1466,8 @@ class ReturnNode extends ASTNode {
     @Override
     public String toString() { return "(mend " + expr.toString() + ")"; }
 }
+
+
 
 
 /**
@@ -1747,18 +1741,56 @@ class JarlangParser {
 
         List<ASTNode> stmts = new ArrayList<>();
 
-        // Collect statements until EOF
         while (currentToken != null && !CONSTANTS.TT_EOF.equals(currentToken.getType())) {
-            // skip stray semicolons
-            if (CONSTANTS.TT_SEMI.equals(currentToken.getType())) {
+            // skip stray semicolons/newlines
+            while (currentToken != null && CONSTANTS.TT_SEMI.equals(currentToken.getType())) {
                 advance();
-                continue;
             }
 
+            if (currentToken == null || CONSTANTS.TT_EOF.equals(currentToken.getType())) break;
+
             ASTNode stmt = statement();
+
+            // If we just parsed an IfNode, allow chaining 'orjudge' even if separated by semicolons/newlines
+            if (stmt instanceof IfNode) {
+                IfNode ifNode = (IfNode) stmt;
+
+                // skip separators between if and orjudge
+                while (currentToken != null && CONSTANTS.TT_SEMI.equals(currentToken.getType())) {
+                    advance();
+                }
+
+                while (currentToken != null && "orjudge".equals(currentToken.getType())) {
+                    advance(); // consume 'orjudge'
+
+                    if (currentToken != null &&
+                        (CONSTANTS.TT_INT.equals(currentToken.getType()) ||
+                        CONSTANTS.TT_FLOAT.equals(currentToken.getType()) ||
+                        CONSTANTS.TT_IDENTIFIER.equals(currentToken.getType()) ||
+                        CONSTANTS.TT_LPAREN.equals(currentToken.getType()) ||
+                        CONSTANTS.TT_MINUS.equals(currentToken.getType()) ||
+                        CONSTANTS.TT_STRING.equals(currentToken.getType()))) {
+
+                        ASTNode elifCond = expr();
+                        ASTNode elifBranch = statement();
+                        ifNode.addBranch(elifCond, elifBranch);
+                    } else {
+                        // unconditional else: parse branch only
+                        ASTNode elseBranch = statement();
+                        ifNode.addBranch(null, elseBranch);
+                        break;
+                    }
+
+                    // allow semicolons between chained orjudge clauses
+                    while (currentToken != null && CONSTANTS.TT_SEMI.equals(currentToken.getType())) {
+                        advance();
+                    }
+                }
+            }
+
             stmts.add(stmt);
 
-            // optional semicolon separator
+            // optional semicolon separator between top-level statements
             if (currentToken != null && CONSTANTS.TT_SEMI.equals(currentToken.getType())) {
                 advance();
             }
@@ -1814,6 +1846,11 @@ class JarlangParser {
     /////////////////////////////////
     // Add new statement parsing method:
     private ASTNode statement() throws SyntaxError {
+        // TODO: Handle orjudge properly
+        //FUNCTION DEFINITION: forge name (params...) block
+        if (currentToken != null && "orjudge".equals(currentToken.getType())) {
+            throw new SyntaxError("orjudge must follow a judge statement", "at token position " + tokIdx);
+        }
 
         if (currentToken != null && "forge".equals(currentToken.getType())) {
             return functionDefinition();
@@ -1886,24 +1923,42 @@ class JarlangParser {
 
     // Add if statement parsing method:
     private ASTNode ifStatement() throws SyntaxError {
-        // Consume 'judge' keyword
+        // consume 'judge'
         advance();
-        
-        // Parse the condition
+
+        IfNode ifNode = new IfNode();
+
+        // parse first condition and branch
         ASTNode condition = expr();
-        
-        // Parse the then branch
-        ASTNode thenBranch = statement();
-        
-        // Check for optional 'orjudge' (else)
-        if (currentToken != null && "orjudge".equals(currentToken.getType())) {
-            advance(); // Consume 'orjudge'
-            ASTNode elseBranch = statement();
-            return new IfNode(condition, thenBranch, elseBranch);
-        } else {
-            // No else branch
-            return new IfNode(condition, thenBranch);
+        ASTNode thenBranch = statement(); // parse a full statement (block or single)
+        ifNode.addBranch(condition, thenBranch);
+
+        // parse zero or more 'orjudge' clauses (elif or else)
+        while (currentToken != null && "orjudge".equals(currentToken.getType())) {
+            advance(); // consume 'orjudge'
+
+            // if next token starts an expression, treat as 'elif' with condition
+            if (currentToken != null &&
+                (CONSTANTS.TT_INT.equals(currentToken.getType()) ||
+                CONSTANTS.TT_FLOAT.equals(currentToken.getType()) ||
+                CONSTANTS.TT_IDENTIFIER.equals(currentToken.getType()) ||
+                CONSTANTS.TT_LPAREN.equals(currentToken.getType()) ||
+                CONSTANTS.TT_MINUS.equals(currentToken.getType()) ||
+                CONSTANTS.TT_STRING.equals(currentToken.getType()))) {
+
+                ASTNode elifCond = expr();
+                ASTNode elifBranch = statement();
+                ifNode.addBranch(elifCond, elifBranch);
+            } else {
+                // treat as unconditional else: parse branch only
+                ASTNode elseBranch = statement();
+                ifNode.addBranch(null, elseBranch);
+                // unconditional else should be last; break to avoid more clauses
+                break;
+            }
         }
+
+        return ifNode;
     }
 
     // Add while statement parsing method:

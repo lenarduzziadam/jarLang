@@ -51,7 +51,7 @@ chant ""
 chant "ascendant value"
 chant res
 chant ""
-wield radius 7
+wield radius 9
 res = circle_area(radius)
 chant "should output circle area equation for 7 pi r ^2"
 chant res
