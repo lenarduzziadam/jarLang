@@ -1,0 +1,75 @@
+# Jarlang comprehensive test suite
+chant "=== Jarlang Comprehensive Test Suite ==="
+
+# Arithmetic & precedence
+wield a 2
+wield b 3
+chant "a + b * 4 ="
+chant a + b * 4
+chant "(a + b) * 4 ="
+chant (a + b) * 4
+
+# Comparisons & judge / orjudge chain
+wield num 3;
+
+
+# While loop with block, multiple statements & nested conditionals
+wield counter 5
+lest counter > 0 {
+  chant "count:";
+  chant counter;
+  counter = counter - 1;
+  judge counter == 2 chant "halfway!" orjudge counter == 1 chant "almost!";
+  chant "loop iteration done";
+}
+
+chant "counter after loop:"
+chant counter
+
+# Sum 1..10 using while
+wield total 0
+wield i 1
+lest i <= 10 {
+  total = total + i;
+  i = i + 1;
+}
+chant "sum 1..10:"
+chant total
+
+# Functions: add and call
+forge add (a, b) {
+  mend a + b
+}
+wield result add(2, 3)
+chant "add(2,3):"
+chant result
+
+# Recursive factorial (tests mend/return handling)
+forge fact (n) {
+  judge n == 0 mend 1 orjudge mend n * fact(n - 1)
+}
+wield f5 fact(5)
+chant "fact(5):"
+chant f5
+
+# Strings and printing
+wield greeting "Hello from Jarlang!"
+chant greeting
+
+# Pi constant & grouped expressions
+wield circle_r 3
+wield circle_area pi * (circle_r * circle_r)
+chant "area of circle with r=3:"
+chant circle_area
+
+# Nested ifs inside a loop
+wield x 4
+lest x > 0 {
+  judge x == 3 chant "three";
+  orjudge x == 2 chant "two";
+  orjudge x == 1 chant "one";
+  chant x;
+  x = x - 1;
+}
+
+chant "=== TEST COMPLETE ==="
