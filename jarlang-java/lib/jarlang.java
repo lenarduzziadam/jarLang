@@ -1353,6 +1353,129 @@ class BlockNode extends ASTNode {
         return sb.toString();
     }
 }
+/////////////////////////////////
+/// INTERPRETER / EXECUTION ENGINE ///
+/// /////////////////////////////////
+/// ////////////////////////////
+/// 
+// Runtime helper to signal return from a function
+class ReturnException extends RuntimeException {
+    public final double value;
+    public ReturnException(double value) { super("return"); this.value = value; }
+}
+// Function container stored in context
+class JarlangFunction {
+    private List<String> params;
+    private ASTNode body;
+    private Context closure;
+
+    public JarlangFunction(List<String> params, ASTNode body, Context closure) {
+        this.params = new ArrayList<>(params);
+        this.body = body;
+        this.closure = closure;
+    }
+
+    public List<String> getParams() { return params; }
+    public ASTNode getBody() { return body; }
+    public Context getClosure() { return closure; }
+}
+
+// AST node for function definition: forge name (params...) block
+class FunctionDefNode extends ASTNode {
+    private String name;
+    private List<String> params;
+    private ASTNode body;
+
+    public FunctionDefNode(String name, List<String> params, ASTNode body) {
+        this.name = name;
+        this.params = new ArrayList<>(params);
+        this.body = body;
+    }
+
+    @Override
+    public double evaluate(Context context) throws InterpreterError {
+        // Capture current context as closure
+        JarlangFunction fn = new JarlangFunction(params, body, context);
+        context.setVariable(name, fn);
+        return 0.0;
+    }
+
+    @Override
+    public String getNodeType() { return "function_def"; }
+
+    @Override
+    public String toString() {
+        return "(forge " + name + " " + params.toString() + " " + body.toString() + ")";
+    }
+}
+
+// AST node for function calls: name(args...)
+class FunctionCallNode extends ASTNode {
+    private String name;
+    private List<ASTNode> args;
+
+    public FunctionCallNode(String name, List<ASTNode> args) {
+        this.name = name;
+        this.args = new ArrayList<>(args);
+    }
+
+    @Override
+    public double evaluate(Context context) throws InterpreterError {
+        Object obj = context.getVariable(name);
+        if (obj == null || !(obj instanceof JarlangFunction)) {
+            throw new InterpreterError("Undefined function: " + name);
+        }
+        JarlangFunction fn = (JarlangFunction) obj;
+        List<String> params = fn.getParams();
+        if (params.size() != args.size()) {
+            throw new InterpreterError("Function '" + name + "' expected " + params.size() + " args, got " + args.size());
+        }
+
+        // Create child context with closure as parent
+        Context child = new Context("fn:" + name, fn.getClosure(), new Position(0,0,0));
+        // Evaluate args in caller context and bind
+        for (int i = 0; i < params.size(); i++) {
+            double val = args.get(i).evaluate(context);
+            child.setVariable(params.get(i), val);
+        }
+
+        try {
+            double res = fn.getBody().evaluate(child);
+            return res;
+        } catch (ReturnException r) {
+            return r.value;
+        }
+    }
+
+    @Override
+    public String getNodeType() { return "call"; }
+
+    @Override
+    public String toString() {
+        return "(call " + name + " " + args.toString() + ")";
+    }
+}
+
+// AST node for returns: mend expr
+class ReturnNode extends ASTNode {
+    private ASTNode expr;
+
+    public ReturnNode(ASTNode expr) { this.expr = expr; }
+
+    @Override
+    public double evaluate(Context context) throws InterpreterError {
+        double v = expr.evaluate(context);
+        throw new ReturnException(v);
+    }
+
+    @Override
+    public String getNodeType() { return "return"; }
+
+    @Override
+    public String toString() { return "(mend " + expr.toString() + ")"; }
+}
+
+
 /**
  * Unified result type that can hold either numeric or string values
  */
@@ -1621,11 +1744,111 @@ class JarlangParser {
         if (currentToken == null) {
             throw new SyntaxError("No tokens to parse", "at token position " + tokIdx);
         }
-        return statement();  // Change from expr() to statement()
+
+        List<ASTNode> stmts = new ArrayList<>();
+
+        // Collect statements until EOF
+        while (currentToken != null && !CONSTANTS.TT_EOF.equals(currentToken.getType())) {
+            // skip stray semicolons
+            if (CONSTANTS.TT_SEMI.equals(currentToken.getType())) {
+                advance();
+                continue;
+            }
+
+            ASTNode stmt = statement();
+            stmts.add(stmt);
+
+            // optional semicolon separator
+            if (currentToken != null && CONSTANTS.TT_SEMI.equals(currentToken.getType())) {
+                advance();
+            }
+        }
+
+        if (stmts.size() == 0) return new NumberNode("0");
+        if (stmts.size() == 1) return stmts.get(0);
+        return new BlockNode(stmts);
+    }
+    // Add parsing helper methods:
+
+    private ASTNode functionDefinition() throws SyntaxError {
+        // consume 'forge'
+        advance();
+        if (currentToken == null || !CONSTANTS.TT_IDENTIFIER.equals(currentToken.getType())) {
+            throw new SyntaxError("Expected function name after 'forge'", "at token position " + tokIdx);
+        }
+        String fname = currentToken.getValue();
+        advance(); // consume name
+
+        List<String> params = new ArrayList<>();
+        if (currentToken != null && CONSTANTS.TT_LPAREN.equals(currentToken.getType())) {
+            advance(); // consume '('
+            while (currentToken != null && !CONSTANTS.TT_RPAREN.equals(currentToken.getType())) {
+                if (!CONSTANTS.TT_IDENTIFIER.equals(currentToken.getType())) {
+                    throw new SyntaxError("Expected parameter name", "at token position " + tokIdx);
+                }
+                params.add(currentToken.getValue());
+                advance();
+                if (currentToken != null && CONSTANTS.TT_COMMA.equals(currentToken.getType())) {
+                    advance();
+                }
+            }
+            if (currentToken == null || !CONSTANTS.TT_RPAREN.equals(currentToken.getType())) {
+                throw new SyntaxError("Expected ')'", "at token position " + tokIdx);
+            }
+            advance(); // consume ')'
+        }
+
+        // parse body as a statement (block or single statement)
+        ASTNode body = statement();
+        return new FunctionDefNode(fname, params, body);
     }
 
+    private ASTNode returnStatement() throws SyntaxError {
+        advance(); // consume 'mend'
+        ASTNode value = expr();
+        return new ReturnNode(value);
+    }
+    
+    /////////////////////////////////
+    /// NEW STATEMENT PARSING METHODS ///
+    /////////////////////////////////
     // Add new statement parsing method:
     private ASTNode statement() throws SyntaxError {
+
+        if (currentToken != null && "forge".equals(currentToken.getType())) {
+            return functionDefinition();
+        }
+        if (currentToken != null && "mend".equals(currentToken.getType())) {
+            return returnStatement();
+        }
+        // BLOCK: { stmt; stmt; ... }
+        if (currentToken != null && CONSTANTS.TT_LBRACE.equals(currentToken.getType())) {
+            advance(); // consume '{'
+            List<ASTNode> stmts = new ArrayList<>();
+            while (currentToken != null && !CONSTANTS.TT_RBRACE.equals(currentToken.getType())) {
+                // skip stray semicolons
+                if (CONSTANTS.TT_SEMI.equals(currentToken.getType())) {
+                    advance();
+                    continue;
+                }
+                stmts.add(statement());
+                // optional semicolon after statement
+                if (currentToken != null && CONSTANTS.TT_SEMI.equals(currentToken.getType())) {
+                    advance();
+                }
+            }
+            if (currentToken == null) {
+                throw new SyntaxError("Expected '}'", "at token position " + tokIdx);
+            }
+            advance(); // consume '}'
+            return new BlockNode(stmts);
+        }
+
+        // ignore standalone semicolons at top level
+        if (currentToken != null && CONSTANTS.TT_SEMI.equals(currentToken.getType())) {
+            advance();
+            return new NumberNode("0"); // no-op
+        }
 
         // Check for if statement: if condition then expression [else expression]
         if (currentToken != null && "judge".equals(currentToken.getType())) {
@@ -1944,10 +2167,30 @@ class JarlangParser {
             return new NumberNode(tok);
         }
 
-        // CASE 5: Variable lookup (NEW!)
+        // CASE 5: Variable lookup or function call 
         else if (tok != null && CONSTANTS.TT_IDENTIFIER.equals(tok.getType())) {
+            String name = tok.getValue();
             advance();
-            return new VariableNode(tok.getValue());
+            // function call if followed by '('
+            if (currentToken != null && CONSTANTS.TT_LPAREN.equals(currentToken.getType())) {
+                advance(); // consume '('
+                List<ASTNode> args = new ArrayList<>();
+                // parse zero or more comma-separated expressions
+                if (currentToken != null && !CONSTANTS.TT_RPAREN.equals(currentToken.getType())) {
+                    args.add(expr());
+                    while (currentToken != null && CONSTANTS.TT_COMMA.equals(currentToken.getType())) {
+                        advance();
+                        args.add(expr());
+                    }
+                }
+                if (currentToken == null || !CONSTANTS.TT_RPAREN.equals(currentToken.getType())) {
+                    throw new SyntaxError("Expected ')' after function call arguments", "at token position " + tokIdx);
+                }
+                advance(); // consume ')'
+                return new FunctionCallNode(name, args);
+            } else {
+                return new VariableNode(name);
+            }
         }
 
         // CASE 6: Parenthesized expression OR block statement
