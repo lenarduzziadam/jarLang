@@ -11,7 +11,9 @@ chant (a + b) * 4
 
 # Comparisons & judge / orjudge chain
 wield num 3;
-
+judge num == 4 chant "num is 4"
+orjudge num == 3 chant "num is 3"
+orjudge 1 == 1 chant "num is something else"  # final default via always-true condition
 
 # While loop with block, multiple statements & nested conditionals
 wield counter 5
@@ -65,9 +67,9 @@ chant circle_area
 # Nested ifs inside a loop
 wield x 4
 lest x > 0 {
-  judge x == 3 chant "three";
-  orjudge x == 2 chant "two";
-  orjudge x == 1 chant "one";
+  judge x == 3 chant "three"
+  orjudge x == 2 chant "two"
+  orjudge x == 1 chant "one"
   chant x;
   x = x - 1;
 }
