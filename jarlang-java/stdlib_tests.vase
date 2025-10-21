@@ -11,4 +11,3 @@ chant hypot(3, 4)
 chant abs(-5)
 chant sumTo(10)
 wield hi "hello world"
-wield hI (2 + 1
