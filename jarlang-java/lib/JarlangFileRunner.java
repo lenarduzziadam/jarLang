@@ -24,6 +24,7 @@ public class JarlangFileRunner {
     public static ExecutionResult executeFile(String filepath) {
         StringBuilder output = new StringBuilder();
         Context globalContext = new Context("file:" + filepath);
+        importedFiles.clear();
         
 
         try {
