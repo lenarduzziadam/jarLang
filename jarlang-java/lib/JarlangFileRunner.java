@@ -13,7 +13,9 @@ import java.io.IOException;
  */
 public class JarlangFileRunner {
     // static set to track already imported files (canonical normalized paths)
-    private static final Set<String> importedFiles = new HashSet<>();
+    // At top of class (replace importedFiles):
+    private static final Map<String, Context> moduleCache = new HashMap<>();
+    private static final Set<String> loadingModules = new HashSet<>();
     
     /**
      * Execute a Jarlang source file
@@ -24,7 +26,6 @@ public class JarlangFileRunner {
     public static ExecutionResult executeFile(String filepath) {
         StringBuilder output = new StringBuilder();
         Context globalContext = new Context("file:" + filepath);
-        importedFiles.clear();
         
 
         try {
@@ -111,18 +112,28 @@ public class JarlangFileRunner {
         }
     }
 
+    private static void copyModuleToContext(Context moduleCtx, Context targetCtx) {
+        if (moduleCtx == null || targetCtx == null) return;
+        Map<String, Object> moduleVars = moduleCtx.getAllVariables();
+        for (Map.Entry<String,Object> e : moduleVars.entrySet()) {
+            // Only add if not already present; change to always overwrite if you prefer
+            if (!targetCtx.hasVariable(e.getKey())) {
+                targetCtx.setVariable(e.getKey(), e.getValue());
+            }
+        }
+    }
+
     /**
      * Execute a Jarlang source file into the provided context.
      * Resolves relative paths relative to the importing file (if the context was created from a file),
      * otherwise relative to the current working directory. Duplicate imports are ignored.
      */
     public static void runFileIntoContext(String filepath, Context context) throws Exception {
-        // Resolve the requested path
+        // Resolve the requested path (existing code)
         Path requested = Paths.get(filepath);
         Path resolved;
 
         if (!requested.isAbsolute()) {
-            // Try to use the context's filename as base if available
             String display = (context != null ? context.getDisplayName() : null);
             Path baseDir = Paths.get(System.getProperty("user.dir")); // fallback
 
@@ -142,25 +153,44 @@ public class JarlangFileRunner {
 
         String canonical = resolved.toString();
 
-        // Avoid duplicate import and cycles
-        if (importedFiles.contains(canonical)) {
+        // If module already cached, just copy its exported symbols into the context
+        if (moduleCache.containsKey(canonical)) {
+            copyModuleToContext(moduleCache.get(canonical), context);
             return;
+        }
+
+        // Detect import cycles
+        if (loadingModules.contains(canonical)) {
+            throw new Exception("Circular import detected: " + canonical);
         }
 
         if (!Files.exists(resolved)) {
             throw new Exception("Import file not found: " + canonical);
         }
 
-        // Mark as imported to avoid cycles
-        importedFiles.add(canonical);
+        // Mark as loading to protect against cycles
+        loadingModules.add(canonical);
 
-        // Read file, parse and execute in provided context
-        String content = readFile(canonical);
-        List<Token> tokens = JarlangRunners.runLexer(canonical, content);
-        JarlangParser parser = new JarlangParser(tokens);
-        ASTNode ast = parser.parse();
+        try {
+            // Create a dedicated module context so module-level variables and closures live there
+            Context moduleCtx = new Context("module:" + canonical);
 
-        // Interpret in the caller's context
-        JarlangRunners.runInterpreter(ast, context);
+            // Parse & run module into its module context
+            String content = readFile(canonical);
+            List<Token> tokens = JarlangRunners.runLexer(canonical, content);
+            JarlangParser parser = new JarlangParser(tokens);
+            ASTNode ast = parser.parse();
+
+            JarlangRunners.runInterpreter(ast, moduleCtx);
+
+            // Cache the module context for later imports
+            moduleCache.put(canonical, moduleCtx);
+
+            // Copy exported symbols into the target context
+            copyModuleToContext(moduleCtx, context);
+        } finally {
+            // Always remove from loading set (whether succeeded or failed)
+            loadingModules.remove(canonical);
+        }
     }
 }
