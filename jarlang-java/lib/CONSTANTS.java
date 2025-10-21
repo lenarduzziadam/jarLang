@@ -38,6 +38,9 @@ public class CONSTANTS {
     public static final String TT_GE = "atleast"; // >= (greater than or equal to) operator
     public static final String TT_NE = "notever"; // != (inequality operator)
 
+    // Import type for Jarlang tokens
+    public static final String TT_IMPORT = "summon"; // import statement
+
     //function calls idk if ill use these
     public static final String TT_BLESS = "bless";   // Function call
     public static final String TT_CURSE = "curse";   // Function call
@@ -55,7 +58,8 @@ public class CONSTANTS {
         Map.entry("wield", TT_WIELD),       // "wield" -> "wield"
         Map.entry("vow", TT_VOW),           // "vow" -> "vow"
         Map.entry("sacred", TT_SACRED),     // "sacred" -> "sacred"
-        Map.entry("chant", TT_CHANT)        // "chant" -> "chant"
+        Map.entry("chant", TT_CHANT),        // "chant" -> "chant"
+        Map.entry("summon", TT_IMPORT)
     );
 
     
@@ -69,6 +73,8 @@ public class CONSTANTS {
     //////////////////////////////////
     /// TOKENS OF JARLANG LANGUAGE ///
     //////////////////////////////////
+    
+    
     
     // Mathematical tokens for expressions
     public static final String TT_INT        = "int";

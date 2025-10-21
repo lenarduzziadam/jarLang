@@ -1,4 +1,6 @@
 # small stdlib with helpers
+
+## Min max 
 forge max (a, b) {
   judge a > b mend a orjudge b > a mend b
 }
@@ -33,4 +35,8 @@ forge ascend (a, b){
 
 forge circle_area (r){
   mend pi * r^2
+}
+
+forge add1(x) {
+  mend x + 1
 }
