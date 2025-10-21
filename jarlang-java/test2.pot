@@ -1,0 +1,39 @@
+# orjudge chain test suite
+chant "=== orjudge chain tests ==="
+
+# Newline chain test
+wield num 3
+chant "Newline chain test"
+judge num == 4 chant "num is 4"
+orjudge num == 3 chant "num is 3"
+orjudge chant "num is something else"
+
+# Semicolon chain test (same-line chaining)
+wield n2 2
+chant "Semicolon chain test"
+judge n2 == 1 chant "n2 is 1"; orjudge n2 == 2 chant "n2 is 2"; orjudge chant "n2 other"
+
+# Block branch test
+wield counter 2
+chant "Block branch test"
+judge counter == 2 {
+  chant "counter is 2"
+  counter = counter - 1
+}
+orjudge {
+  chant "counter not 2"
+}
+
+# orjudge on next line with blank line
+wield x 1
+chant "Blank-line before orjudge"
+judge x == 2 chant "x is 2"
+
+orjudge x == 1 chant "x is 1"
+
+# Unconditional else (final orjudge without condition)
+wield y 0
+judge y == 1 chant "y == 1"
+orjudge chant "y default else"
+
+chant "=== END OF orjudge TESTS ==="

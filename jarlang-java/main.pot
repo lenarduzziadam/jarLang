@@ -1,0 +1,23 @@
+# main.pot - Tests summon import from stdlib.vase
+
+
+summon "stdlib.vase"
+
+# Test some functions
+chant max(5, 7)          # expect 7
+chant min(5, 7)          # expect 5
+chant clamp(10, 0, 5)    # expect 5
+chant commune(3, 4)      # expect 7
+chant banish(10, 2)      # expect 8
+chant rally(6, 7)        # expect 42
+chant slash(12, 3)       # expect 4
+chant ascend(2, 8)       # expect 256
+chant circle_area(2)     # expect ~12.566370
+chant add1(41)           # expect 42
+
+# Test variable assignment and use
+wield x 10
+chant add1(x)            # expect 11
+chant add1(add1(add1(commune(x,x))))
+
+# End
