@@ -64,23 +64,28 @@ import java.util.*;
  * to help users locate and fix the problem in their source code.
  */
 class IllegalCharError extends Exception {
-    private String position;  // Stores line/column information
-    
+    private Position position;  // Stores line/column information
+    private String filename;
     /**
      * Constructor creates an IllegalCharError with message and position
      * @param message Descriptive error message (e.g., "Illegal character 'x'")
      * @param position Location in source code where error occurred
      */
-    public IllegalCharError(String message, String position) {
+    public IllegalCharError(String message, Position position) {
         super(message);  // Pass message to parent Exception class
-        this.position = position;
+        this.position = position == null ? new Position(0,0,0) : position.copy();
+        this.filename = null;
     }
-    
+    public IllegalCharError(String message, Position position, String filename) {
+        super(message);
+        this.position = position == null ? new Position(0,0,0) : position.copy();
+        this.filename = filename;
+    }
     /**
      * Get the position where this error occurred
      * @return String describing line/column location
      */
-    public String getPosition() { return position; }
+    public String getPosition() { return position.toString(); }
     
     /**
      * Override toString to provide complete error information
@@ -89,7 +94,8 @@ class IllegalCharError extends Exception {
      */
     @Override
     public String toString() {
-        return "IllegalCharError: " + getMessage() + " " + position;
+        String filePart = filename != null ? (" in " + filename) : "";
+        return "IllegalCharError: " + getMessage() + filePart + " at " + position.toString();
     }
 }
 
@@ -106,30 +112,37 @@ class IllegalCharError extends Exception {
  * when the current token doesn't match what the grammar expects.
  */
 class SyntaxError extends Exception {
-    private String position;  // Stores token position information
-    
+    private Position position;  // Stores token position information
+    private String filename;
+
     /**
      * Constructor creates a SyntaxError with message and token position
      * @param message Descriptive error message (e.g., "Expected ')'")
      * @param position Token position where parsing failed
      */
-    public SyntaxError(String message, String position) {
+    public SyntaxError(String message, Position position) {
         super(message);
-        this.position = position;
+        this.position = position == null ? new Position(0,0,0) : position.copy();
+        this.filename = null;
     }
-    
+    public SyntaxError(String message, Position position, String filename) {
+        super(message);
+        this.position = position == null ? new Position(0,0,0) : position.copy();
+        this.filename = filename;
+    }
     /**
      * Get the position where this syntax error occurred
      * @return String describing token position
      */
-    public String getPosition() { return position; }
+    public String getPosition() { return position.toString(); }
     
     /**
      * Override toString to provide complete syntax error information
      */
     @Override
     public String toString() {
-        return "SyntaxError: " + getMessage() + " " + position;
+        String filePart = filename != null ? (" in " + filename) : "";
+        return "SyntaxError: " + getMessage() + filePart + " at " + position.toString();
     }
 }
 
@@ -146,12 +159,22 @@ class SyntaxError extends Exception {
  * interpreter errors occur during execution of the parsed program.
  */
 class InterpreterError extends Exception {
-    /**
-     * Constructor creates an InterpreterError with descriptive message
-     * @param message What went wrong during evaluation
-     */
+    private Position position;
+    private String filename;
     public InterpreterError(String message) {
         super(message);
+    }
+    public InterpreterError(String message, Position pos, String filename) {
+        super(message);
+        this.position = pos;
+        this.filename = filename;
+    }
+    @Override
+    public String toString() {
+        if (position != null) {
+            return "InterpreterError: " + getMessage() + " in " + filename + " at " + position.toString();
+        }
+        return "InterpreterError: " + getMessage();
     }
 }
 
@@ -436,97 +459,114 @@ class JarlangLexer {
             // MATHEMATICAL OPERATORS - mapped to warrior theme
             // Each operator gets converted to its warrior-themed token type
             else if ("+".equals(currentChar)) {
-                tokens.add(new Token(CONSTANTS.TT_PLUS, currentChar));    // "commune"
+                Position posStart = pos.copy();
+                tokens.add(new Token(CONSTANTS.TT_PLUS, currentChar, posStart, pos.copy()));    // "commune"
                 advance();
             }
             else if ("-".equals(currentChar)) {
-                tokens.add(new Token(CONSTANTS.TT_MINUS, currentChar));   // "banish"
+                Position posStart = pos.copy();
+                tokens.add(new Token(CONSTANTS.TT_MINUS, currentChar, posStart, pos.copy()));   // "banish"
                 advance();
             }
             else if ("*".equals(currentChar)) {
-                tokens.add(new Token(CONSTANTS.TT_MUL, currentChar));     // "rally"
+                Position posStart = pos.copy();
+                tokens.add(new Token(CONSTANTS.TT_MUL, currentChar, posStart, pos.copy()));     // "rally"
                 advance();
             }
             else if ("/".equals(currentChar)) {
-                tokens.add(new Token(CONSTANTS.TT_DIV, currentChar));     // "slash"
+                Position posStart = pos.copy();
+                tokens.add(new Token(CONSTANTS.TT_DIV, currentChar, posStart, pos.copy()));     // "slash"
                 advance();
             }
             else if ("^".equals(currentChar)) {
-                tokens.add(new Token(CONSTANTS.TT_POW, currentChar));     // "ascend"
+                Position posStart = pos.copy();
+                tokens.add(new Token(CONSTANTS.TT_POW, currentChar, posStart, pos.copy()));     // "ascend"
                 advance();
             }
             
             // PARENTHESES AND GROUPING - for expression precedence
             else if ("(".equals(currentChar)) {
-                tokens.add(new Token(CONSTANTS.TT_LPAREN, currentChar));  // "gather"
+                Position posStart = pos.copy();
+                tokens.add(new Token(CONSTANTS.TT_LPAREN, currentChar, posStart, pos.copy()));  // "gather"
                 advance();
             }
             else if (")".equals(currentChar)) {
-                tokens.add(new Token(CONSTANTS.TT_RPAREN, currentChar));  // "disperse"
+                Position posStart = pos.copy();
+                tokens.add(new Token(CONSTANTS.TT_RPAREN, currentChar, posStart, pos.copy()));  // "disperse"
                 advance();
             }
             
             // COMPARISON OPERATORS - for future language extensions
             else if ("=".equals(currentChar)) {
+                Position posStart = pos.copy();
                 advance();
                 if ("=".equals(currentChar)) {
-                    tokens.add(new Token(CONSTANTS.TT_EE, "=="));      // "evermore"
+                    Position posEnd = pos.copy();
+                    tokens.add(new Token(CONSTANTS.TT_EE, "==", posStart, posEnd));      // "evermore"
                     advance();
                 } else {
-                    tokens.add(new Token(CONSTANTS.TT_EQ, "="));      // "bind"
+                    tokens.add(new Token(CONSTANTS.TT_EQ, "=", posStart, pos.copy()));      // "bind"
                 }
             }
             else if ("!".equals(currentChar)) {
+                Position posStart = pos.copy();
                 advance(); // Move past '!'
                 if ("=".equals(currentChar)) {
                     // Found "!="
                     advance(); // Move past '='
-                    tokens.add(new Token(CONSTANTS.TT_NE, "!="));
+                    tokens.add(new Token(CONSTANTS.TT_NE, "!=", posStart, pos.copy()));    // "never"
                 } else {
                     // Just single "!" (logical not)
-                    tokens.add(new Token(CONSTANTS.TT_NOT, "!"));
+                    tokens.add(new Token(CONSTANTS.TT_NOT, "!", posStart, pos.copy()));
                 }
             }
             else if ("<".equals(currentChar)) {
+                Position posStart = pos.copy();
                 advance();      // "lessen"
                 if("=".equals(currentChar)) {
-                    tokens.add(new Token(CONSTANTS.TT_LE, "<="));      // "atmost"
+                    tokens.add(new Token(CONSTANTS.TT_LE, "<=", posStart, pos.copy()));      // "atmost"
                     advance();
                 } else {
                     // Just single "<"
-                    tokens.add(new Token(CONSTANTS.TT_LT, "<"));
+                    tokens.add(new Token(CONSTANTS.TT_LT, "<", posStart, pos.copy()));
                 }
             }
             else if (">".equals(currentChar)) {
+                Position posStart = pos.copy();
                 advance();      // "heighten"
                 if("=".equals(currentChar)) {
-                    tokens.add(new Token(CONSTANTS.TT_GE, ">="));      // "atleast"
+                    tokens.add(new Token(CONSTANTS.TT_GE, ">=", posStart, pos.copy()));      // "atleast"
                     advance();
                 } else {
                     // Just single ">"
-                    tokens.add(new Token(CONSTANTS.TT_GT, ">"));
+                    tokens.add(new Token(CONSTANTS.TT_GT, ">", posStart, pos.copy()));
                 }
             }
             
             // PUNCTUATION AND DELIMITERS - for structured programming
             else if (",".equals(currentChar)) {
-                tokens.add(new Token(CONSTANTS.TT_COMMA, currentChar));   // "separate"
+                Position posStart = pos.copy();
+                tokens.add(new Token(CONSTANTS.TT_COMMA, currentChar, posStart, pos.copy()));   // "separate"
                 advance();
             }
             else if (":".equals(currentChar)) {
-                tokens.add(new Token(CONSTANTS.TT_COLON, currentChar));   // "declare"
+                Position posStart = pos.copy();
+                tokens.add(new Token(CONSTANTS.TT_COLON, currentChar, posStart, pos.copy()));   // "declare"
                 advance();
             }
             else if (";".equals(currentChar)) {
-                tokens.add(new Token(CONSTANTS.TT_SEMI, currentChar));    // "conclude"
+                Position posStart = pos.copy();
+                tokens.add(new Token(CONSTANTS.TT_SEMI, currentChar, posStart, pos.copy()));    // "conclude"
                 advance();
             }
             else if ("{".equals(currentChar)) {
-                tokens.add(new Token(CONSTANTS.TT_LBRACE, currentChar));  // "enclose"
+                Position posStart = pos.copy();
+                tokens.add(new Token(CONSTANTS.TT_LBRACE, currentChar, posStart, pos.copy()));  // "enclose"
                 advance();
             }
             else if ("}".equals(currentChar)) {
-                tokens.add(new Token(CONSTANTS.TT_RBRACE, currentChar));  // "release"
+                Position posStart = pos.copy();
+                tokens.add(new Token(CONSTANTS.TT_RBRACE, currentChar, posStart, pos.copy()));  // "release"
                 advance();
             }
             
@@ -548,6 +588,7 @@ class JarlangLexer {
             // STRING LITERALS - text enclosed in double quotes
             // Examples: "hello", "warrior code", "3.14 is pi"
             else if ("\"".equals(currentChar)) {
+                Position posStart = pos.copy();
                 advance(); // Skip opening quote
                 StringBuilder strValue = new StringBuilder();
                 
@@ -558,12 +599,13 @@ class JarlangLexer {
                 }
                 
                 if ("\"".equals(currentChar)) {
+                    Position posEnd = pos.copy();
                     advance(); // Skip closing quote
-                    tokens.add(new Token(CONSTANTS.TT_STRING, strValue.toString()));  // "tale"
+                    tokens.add(new Token(CONSTANTS.TT_STRING, strValue.toString(), posStart, posEnd));  // "tale"
                 } else {
                     // String was not properly closed - this is an error
-                    throw new IllegalCharError("Unterminated string literal: " + strValue.toString(), 
-                                             "at position " + pos.toString());
+                    Position errPos = pos.copy();
+                    throw new IllegalCharError("Unterminated string literal: " + strValue.toString(), errPos);
                 }
             }
             
@@ -572,8 +614,8 @@ class JarlangLexer {
             else if (!currentChar.isEmpty()) {
                 String illegalChar = currentChar;
                 advance(); // Move past the invalid character
-                throw new IllegalCharError("Illegal character '" + illegalChar + "'", 
-                                         "at position " + pos.toString());
+                Position errPos = pos.copy();
+                throw new IllegalCharError("Illegal character '" + illegalChar + "'", errPos);
             }
         }
         
@@ -605,6 +647,7 @@ class JarlangLexer {
      * @return Token representing the parsed number
      */
     private Token makeNumber() {
+        Position posStart = pos.copy();
         StringBuilder numStr = new StringBuilder();
         int dotCount = 0;  // Track decimal points to distinguish int vs float
         
@@ -625,11 +668,13 @@ class JarlangLexer {
             advance();
         }
         
+        Position posEnd = pos.copy();
+
         // Determine token type based on whether we found a decimal point
         if (dotCount == 0) {
-            return new Token(CONSTANTS.TT_INT, numStr.toString());      // "int"
+            return new Token(CONSTANTS.TT_INT, numStr.toString(), posStart, posEnd);
         } else {
-            return new Token(CONSTANTS.TT_FLOAT, numStr.toString());    // "float"
+            return new Token(CONSTANTS.TT_FLOAT, numStr.toString(), posStart, posEnd);    // "float"
         }
     }
 
@@ -653,6 +698,7 @@ class JarlangLexer {
      * @return Token representing the parsed identifier
      */
     private Token makeIdentifier() {
+        Position posStart = pos.copy();
         StringBuilder idStr = new StringBuilder();
         
         // Collect letters, digits, and underscores for identifiers
@@ -660,22 +706,23 @@ class JarlangLexer {
             idStr.append(currentChar);
             advance();
         }
-        
+        // Mark end position after identifier
+        Position posEnd = pos.copy();
         String id = idStr.toString();
 
         if("pi".equals(id)) {
             // Future enhancement: return specific keyword token type
             // For now, treat all keywords as identifiers
-            return new Token(CONSTANTS.TT_PI, String.valueOf(Math.PI));
+            return new Token(CONSTANTS.TT_PI, String.valueOf(Math.PI), posStart, posEnd);  // "pi"
         }
 
         if (CONSTANTS.KEYWORDS.containsKey(id)) {
             // Future enhancement: return specific keyword token type
             // For now, treat all keywords as identifiers
             String tokenType = CONSTANTS.KEYWORDS.get(id);
-            return new Token(tokenType, id);  // "keyword"
+            return new Token(tokenType, id, posStart, posEnd);  // "keyword"
         }
-        return new Token(CONSTANTS.TT_IDENTIFIER, id);  // "identifier"
+        return new Token(CONSTANTS.TT_IDENTIFIER, id, posStart, posEnd);  // "identifier"
     }
 }
 
@@ -1726,15 +1773,18 @@ class JarlangParser {
     private List<Token> tokens;    // Complete list of tokens from lexer
     private int tokIdx;            // Current position in token list
     private Token currentToken;    // Token currently being processed
+    private String filename;
     
     /**
      * Constructor initializes parser with token list
      * @param tokens List of tokens produced by the lexer
+     * @param filename 
      */
-    public JarlangParser(List<Token> tokens) {
+    public JarlangParser(List<Token> tokens, String filename) {
         this.tokens = new ArrayList<>(tokens);  // Defensive copy
         this.tokIdx = -1;                       // Start before first token
         this.currentToken = null;
+        this.filename = filename;
         advance();                              // Move to first token
     }
     
@@ -1766,7 +1816,8 @@ class JarlangParser {
     // In JarlangParser class, modify the parse() method:
     public ASTNode parse() throws SyntaxError {
         if (currentToken == null) {
-            throw new SyntaxError("No tokens to parse", "at token position " + tokIdx);
+            Position errPos = new Position(-1, 0, 0);
+            throw new SyntaxError("No tokens to parse", errPos);
         }
 
         List<ASTNode> stmts = new ArrayList<>();
@@ -1836,7 +1887,8 @@ class JarlangParser {
         // consume 'forge'
         advance();
         if (currentToken == null || !CONSTANTS.TT_IDENTIFIER.equals(currentToken.getType())) {
-            throw new SyntaxError("Expected function name after 'forge'", "at token position " + tokIdx);
+            Position errPos = currentToken != null ? currentToken.getPosStart() : new Position(-1, 0, 0);
+            throw new SyntaxError("Expected function name after 'forge'", errPos, filename);
         }
         String fname = currentToken.getValue();
         advance(); // consume name
@@ -1846,7 +1898,8 @@ class JarlangParser {
             advance(); // consume '('
             while (currentToken != null && !CONSTANTS.TT_RPAREN.equals(currentToken.getType())) {
                 if (!CONSTANTS.TT_IDENTIFIER.equals(currentToken.getType())) {
-                    throw new SyntaxError("Expected parameter name", "at token position " + tokIdx);
+                    Position errPos = currentToken != null ? currentToken.getPosStart() : new Position(-1, 0, 0);
+                    throw new SyntaxError("Expected parameter name", errPos, filename);
                 }
                 params.add(currentToken.getValue());
                 advance();
@@ -1855,7 +1908,8 @@ class JarlangParser {
                 }
             }
             if (currentToken == null || !CONSTANTS.TT_RPAREN.equals(currentToken.getType())) {
-                throw new SyntaxError("Expected ')'", "at token position " + tokIdx);
+                Position errPos = currentToken != null ? currentToken.getPosStart() : new Position(-1, 0, 0);
+                throw new SyntaxError("Expected ')' after function parameters", errPos, filename);
             }
             advance(); // consume ')'
         }
@@ -1879,7 +1933,8 @@ class JarlangParser {
         // TODO: Handle orjudge properly
         //FUNCTION DEFINITION: forge name (params...) block
         if (currentToken != null && "orjudge".equals(currentToken.getType())) {
-            throw new SyntaxError("orjudge must follow a judge statement", "at token position " + tokIdx);
+            Position errPos = currentToken != null ? currentToken.getPosStart() : new Position(-1, 0, 0);
+            throw new SyntaxError("orjudge must follow a judge statement", errPos, filename);
         }
         // IMPORT STATEMENT: summon "<filename>.vase"
         if (currentToken != null && "summon".equals(currentToken.getType())) {
@@ -1909,7 +1964,8 @@ class JarlangParser {
                 }
             }
             if (currentToken == null) {
-                throw new SyntaxError("Expected '}'", "at token position " + tokIdx);
+                Position errPos = currentToken != null ? currentToken.getPosStart() : new Position(-1, 0, 0);
+                throw new SyntaxError("Expected '}'", errPos, filename);
             }
             advance(); // consume '}'
             return new BlockNode(stmts);
@@ -2026,7 +2082,8 @@ class JarlangParser {
         advance();
 
         if (currentToken == null || !CONSTANTS.TT_STRING.equals(currentToken.getType())) {
-            throw new SyntaxError("Expected string literal after 'summon'", "at token position " + tokIdx);
+            Position errPos = currentToken != null ? currentToken.getPosStart() : new Position(-1, 0, 0);
+            throw new SyntaxError("Expected string literal after 'summon'", errPos, filename);
         }
         String path = currentToken.getValue();
         advance(); // consume string
@@ -2044,7 +2101,8 @@ class JarlangParser {
             advance(); // Consume 'wield'
             
             if (currentToken == null || !CONSTANTS.TT_IDENTIFIER.equals(currentToken.getType())) {
-                throw new SyntaxError("Expected variable name after 'wield'", "at token position " + tokIdx);
+                Position errPos = currentToken != null ? currentToken.getPosStart() : new Position(-1, 0, 0);
+                throw new SyntaxError("Expected variable name after 'wield'", errPos, filename);
             }
             
             varName = currentToken.getValue();
@@ -2057,12 +2115,14 @@ class JarlangParser {
             
             // Expect '=' token
             if (currentToken == null || !CONSTANTS.TT_EQ.equals(currentToken.getType())) {
-                throw new SyntaxError("Expected '=' after variable name", "at token position " + tokIdx);
+                Position errPos = currentToken != null ? currentToken.getPosStart() : new Position(-1, 0, 0);
+                throw new SyntaxError("Expected '=' after variable name", errPos, filename);
             }
             advance(); // Consume '='
             
         } else {
-            throw new SyntaxError("Expected 'wield' or variable name", "at token position " + tokIdx);
+            Position errPos = currentToken != null ? currentToken.getPosStart() : new Position(-1, 0, 0);
+            throw new SyntaxError("Expected 'wield' or variable name", errPos, filename);
         }
         // Parse the value expression
         ASTNode value = expr();
@@ -2287,7 +2347,8 @@ class JarlangParser {
                     }
                 }
                 if (currentToken == null || !CONSTANTS.TT_RPAREN.equals(currentToken.getType())) {
-                    throw new SyntaxError("Expected ')' after function call arguments", "at token position " + tokIdx);
+                    Position errPos = currentToken != null ? currentToken.getPosStart() : new Position(-1, 0, 0);
+                    throw new SyntaxError("Expected ')' after function call arguments", errPos, filename);
                 }
                 advance(); // consume ')'
                 return new FunctionCallNode(name, args);
@@ -2322,15 +2383,18 @@ class JarlangParser {
                     return new NumberNode("0"); // Return 0 for empty blocks
                 }
             } else {
-                throw new SyntaxError("Expected ')'", "at token position " + tokIdx);
+                Position errPos = currentToken != null ? currentToken.getPosStart() : new Position(-1, 0, 0);
+                throw new SyntaxError("Expected ')'", errPos, filename);
             }
         }
         // CASE 7: Invalid token for factor
         else {
             if (tok != null) {
-                throw new SyntaxError("Expected int, float, identifier, or '(' but found: " + tok.getType(), "at token position " + tokIdx);
+                Position errPos = tok.getPosStart();
+                throw new SyntaxError("Expected int, float, identifier, or '(' but found: " + tok.getType(), errPos, filename);
             } else {
-                throw new SyntaxError("Unexpected end of input", "at token position " + tokIdx);
+                Position errPos = currentToken != null ? currentToken.getPosStart() : new Position(-1, 0, 0);
+                throw new SyntaxError("Unexpected end of input", errPos, filename);
             }
         }
     }
@@ -2504,7 +2568,7 @@ class JarlangRunners {
             List<Token> tokens = runLexer(filename, text);
             
             // PHASE 2: Syntax Analysis
-            JarlangParser parser = new JarlangParser(tokens);
+            JarlangParser parser = new JarlangParser(tokens, filename);
             ASTNode ast = parser.parse();
             
             // Success: return AST with no errors
