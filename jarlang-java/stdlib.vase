@@ -4,7 +4,7 @@ forge max (a, b) {
 }
 
 forge min (a, b) {
-  judge a < b mend a orjudge b < a mend b
+  judge a < b mend a orjudge mend b
 }
 
 forge clamp (x, lo, hi) {
