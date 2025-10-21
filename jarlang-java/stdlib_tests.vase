@@ -1,0 +1,12 @@
+summon "stdlib.vase"
+
+# Basic stdlib smoke tests - each chant prints the returned value
+chant max(3, 5)
+chant min(3, 5)
+chant gcd(54, 24)
+chant fact(5)
+chant fib(7)
+chant pow_int(2, 10)
+chant hypot(3, 4)
+chant abs(-5)
+chant sumTo(10)

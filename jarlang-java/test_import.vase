@@ -1,0 +1,3 @@
+summon "stdlib.vase"
+chant max(3, 5)
+chant gcd(54, 24)

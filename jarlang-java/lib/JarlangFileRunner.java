@@ -47,7 +47,16 @@ public class JarlangFileRunner {
             output.append("Result: ").append(result).append("\n");
             output.append("\n🗡️ Execution completed successfully!\n");
             return new ExecutionResult(output.toString(), true, null);
-
+        
+        } catch (SyntaxError e) {
+            output.append("❌ Failed to execute file: ").append(e.toString()).append("\n");
+            return new ExecutionResult(output.toString(), false, e.toString());
+        } catch (IllegalCharError e) {
+            output.append("❌ Failed to execute file: ").append(e.toString()).append("\n");
+            return new ExecutionResult(output.toString(), false, e.toString());
+        } catch (InterpreterError e) {
+            output.append("❌ Runtime error: ").append(e.toString()).append("\n");
+            return new ExecutionResult(output.toString(), false, e.toString());
         } catch (Exception e) {
             output.append("❌ Failed to execute file: ").append(e.getMessage()).append("\n");
             return new ExecutionResult(output.toString(), false, e.getMessage());
