@@ -1,0 +1,36 @@
+# small stdlib with helpers
+forge max (a, b) {
+  judge a > b mend a orjudge b > a mend b
+}
+
+forge min (a, b) {
+  judge a < b mend a orjudge b < a mend b
+}
+
+forge clamp (x, lo, hi) {
+  judge x < lo mend lo orjudge x > hi mend hi orjudge mend x
+}
+
+forge commune (a, b) {
+  mend a + b
+}
+
+forge banish (a, b) {
+  mend a - b
+}
+
+forge rally (a, b) {
+  mend a * b
+}
+
+forge slash (a, b){
+  mend a / b
+}
+
+forge ascend (a, b){
+  mend a ^ b
+}
+
+forge circle_area (r){
+  mend pi * r^2
+}
