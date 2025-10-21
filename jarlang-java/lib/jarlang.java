@@ -620,8 +620,11 @@ class JarlangLexer {
         }
         
         // Add EOF (End Of File) token to mark end of input
-        // This helps the parser know when to stop processing
-        tokens.add(new Token(CONSTANTS.TT_EOF, ""));  // "end"
+        // Attach the current position so parser errors at EOF get a sensible location
+        Position eofPosStart = pos.copy();
+        Position eofPosEnd = pos.copy();
+        tokens.add(new Token(CONSTANTS.TT_EOF, "", eofPosStart, eofPosEnd));  // "end"
+        
         return tokens;
     }
     
