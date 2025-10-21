@@ -105,3 +105,6 @@ forge pow_int(a, n) {
   mend res
 }
 
+forge invert_sign(n) {
+  mend n * -1
+}
