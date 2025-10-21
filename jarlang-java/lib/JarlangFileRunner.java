@@ -12,6 +12,8 @@ import java.io.IOException;
  * execution and batch processing capabilities.
  */
 public class JarlangFileRunner {
+    // static set to track already imported files (canonical normalized paths)
+    private static final Set<String> importedFiles = new HashSet<>();
     
     /**
      * Execute a Jarlang source file
@@ -22,6 +24,7 @@ public class JarlangFileRunner {
     public static ExecutionResult executeFile(String filepath) {
         StringBuilder output = new StringBuilder();
         Context globalContext = new Context("file:" + filepath);
+        
 
         try {
             // Read file contents
@@ -105,5 +108,58 @@ public class JarlangFileRunner {
             this.success = success;
             this.errorMessage = errorMessage;
         }
+    }
+
+    /**
+     * Execute a Jarlang source file into the provided context.
+     * Resolves relative paths relative to the importing file (if the context was created from a file),
+     * otherwise relative to the current working directory. Duplicate imports are ignored.
+     */
+    public static void runFileIntoContext(String filepath, Context context) throws Exception {
+        // Resolve the requested path
+        Path requested = Paths.get(filepath);
+        Path resolved;
+
+        if (!requested.isAbsolute()) {
+            // Try to use the context's filename as base if available
+            String display = (context != null ? context.getDisplayName() : null);
+            Path baseDir = Paths.get(System.getProperty("user.dir")); // fallback
+
+            if (display != null && display.startsWith("file:")) {
+                String fileAnchor = display.substring("file:".length());
+                Path baseFile = Paths.get(fileAnchor);
+                if (Files.exists(baseFile)) {
+                    Path parent = baseFile.getParent();
+                    if (parent != null) baseDir = parent;
+                }
+            }
+
+            resolved = baseDir.resolve(requested).toAbsolutePath().normalize();
+        } else {
+            resolved = requested.toAbsolutePath().normalize();
+        }
+
+        String canonical = resolved.toString();
+
+        // Avoid duplicate import and cycles
+        if (importedFiles.contains(canonical)) {
+            return;
+        }
+
+        if (!Files.exists(resolved)) {
+            throw new Exception("Import file not found: " + canonical);
+        }
+
+        // Mark as imported to avoid cycles
+        importedFiles.add(canonical);
+
+        // Read file, parse and execute in provided context
+        String content = readFile(canonical);
+        List<Token> tokens = JarlangRunners.runLexer(canonical, content);
+        JarlangParser parser = new JarlangParser(tokens);
+        ASTNode ast = parser.parse();
+
+        // Interpret in the caller's context
+        JarlangRunners.runInterpreter(ast, context);
     }
 }

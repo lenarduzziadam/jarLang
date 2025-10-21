@@ -1345,6 +1345,36 @@ class BlockNode extends ASTNode {
         return sb.toString();
     }
 }
+
+    // AST node for import statements: summon "<filename>.vase"
+    class ImportNode extends ASTNode {
+        private String path;
+
+        public ImportNode(String path) {
+            this.path = path;
+        }
+
+        public String getPath() { return path; }
+
+        @Override
+        public double evaluate(Context context) throws InterpreterError {
+            try {
+                // Execute the imported file into the provided context
+                JarlangFileRunner.runFileIntoContext(path, context);
+                return 0.0;
+            } catch (Exception e) {
+                throw new InterpreterError("Failed to import '" + path + "': " + e.getMessage());
+            }
+        }
+
+        @Override
+        public String getNodeType() { return "import"; }
+
+        @Override
+        public String toString() {
+            return "(summon \"" + path + "\")";
+        }
+    }
 /////////////////////////////////
 /// INTERPRETER / EXECUTION ENGINE ///
 /// /////////////////////////////////
@@ -1851,6 +1881,10 @@ class JarlangParser {
         if (currentToken != null && "orjudge".equals(currentToken.getType())) {
             throw new SyntaxError("orjudge must follow a judge statement", "at token position " + tokIdx);
         }
+        // IMPORT STATEMENT: summon "<filename>.vase"
+        if (currentToken != null && "summon".equals(currentToken.getType())) {
+            return importStatement();
+        }
 
         if (currentToken != null && "forge".equals(currentToken.getType())) {
             return functionDefinition();
@@ -1984,6 +2018,20 @@ class JarlangParser {
         ASTNode expression = expr();
         
         return new ChantNode(expression);
+    }
+
+    // Add import parsing method: summon "<filename>(.vase|.pot)"
+    private ASTNode importStatement() throws SyntaxError {
+        // consume 'summon'
+        advance();
+
+        if (currentToken == null || !CONSTANTS.TT_STRING.equals(currentToken.getType())) {
+            throw new SyntaxError("Expected string literal after 'summon'", "at token position " + tokIdx);
+        }
+        String path = currentToken.getValue();
+        advance(); // consume string
+
+        return new ImportNode(path);
     }
 
     // Add assignment parsing method:
