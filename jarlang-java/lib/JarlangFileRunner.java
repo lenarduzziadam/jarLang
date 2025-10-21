@@ -38,7 +38,8 @@ public class JarlangFileRunner {
 
             // Tokenize whole file and parse into a single AST (can be a BlockNode)
             List<Token> tokens = JarlangRunners.runLexer(filepath, content);
-            JarlangParser parser = new JarlangParser(tokens, content);
+            // pass the actual filepath as the parser filename so errors report the file name
+            JarlangParser parser = new JarlangParser(tokens, filepath);
             ASTNode ast = parser.parse();
 
             // Interpret the entire AST in the single global context
