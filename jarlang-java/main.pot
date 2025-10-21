@@ -4,11 +4,18 @@
 summon "stdlib.vase"
 
 # Test some functions
+chant "expect 7"
 chant max(5, 7)          # expect 7
+chant commune(3, 4)      # expect 7
+
+chant "expect 5"
 chant min(5, 7)          # expect 5
 chant clamp(10, 0, 5)    # expect 5
-chant commune(3, 4)      # expect 7
+
+chant "expect 8"
 chant banish(10, 2)      # expect 8
+
+chant "expect 42"
 chant rally(6, 7)        # expect 42
 chant slash(12, 3)       # expect 4
 chant ascend(2, 8)       # expect 256
@@ -20,4 +27,19 @@ wield x 10
 chant add1(x)            # expect 11
 chant add1(add1(add1(commune(x,x))))
 
-# End
+# More complex functions testing
+chant fact(0)    # expect 1
+chant fact(5)    # expect 120
+chant fib(0)     # expect 0
+chant fib(1)     # expect 1
+chant fib(10)    # expect 55
+chant gcd(48,18) # expect 6
+chant lcm(4,6)   # expect 12
+chant sumTo(10)  # expect 55
+chant mean2(3,7) # expect 5
+chant abs(-5)    # expect 5
+chant approx_equal(3.14159, 3.1416, 0.0001) # expect 1
+chant pow_int(2,8) # expect 256
+chant hypot(3,4) # expect 5
+
+# end

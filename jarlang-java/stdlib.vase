@@ -40,3 +40,68 @@ forge circle_area (r){
 forge add1(x) {
   mend x + 1
 }
+
+forge fact(n) {
+  judge n < 2 mend 1 orjudge mend n * fact(n - 1)
+}
+
+forge fib(n) {
+  judge n < 2 mend n
+  wield a 0
+  wield b 1
+  wield i 1
+  lest i < n {
+    wield temp a + b
+    a = b
+    b = temp
+    i = i + 1
+  }
+  mend b
+}
+
+forge mean2(a, b) {
+  mend (a + b) / 2
+}
+
+forge abs(x) {
+  judge x < 0 mend -x orjudge mend x
+}
+
+forge sumTo(n) {
+  mend (n * (n + 1)) / 2
+}
+
+forge approx_equal(a, b, eps) {
+  judge abs(a - b) < eps mend 1 orjudge mend 0
+}
+
+#add gcd function later
+
+forge gcd(a, b) {
+  judge a == 0 mend b orjudge b == 0 mend a
+  lest a != b {
+    judge a > b { a = a - b } orjudge { b = b - a }
+  }
+  mend a
+}
+
+forge lcm(a, b) {
+  mend (a * b) / gcd(a, b)
+}
+
+forge hypot(a, b) {
+  mend (a^2 + b^2) ^ (1/2)
+}
+
+forge pow_int(a, n) {
+  judge n == 0 mend 1
+  judge n == 1 mend a
+  wield res 1
+  wield i 0
+  lest i < n {
+    res = res * a
+    i = i + 1
+  }
+  mend res
+}
+
