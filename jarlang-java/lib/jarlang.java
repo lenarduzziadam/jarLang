@@ -786,7 +786,7 @@ abstract class ASTNode {
      */
     //TODO: public abstract double evaluate() throws InterpreterError;
     // Modify ASTNode abstract class:
-    public abstract double evaluate(Context context) throws InterpreterError;
+    public abstract Result evaluate(Context context) throws InterpreterError;
 
 // Update all evaluate methods in NumberNode, BinOpNode, etc. to accept Context
     
@@ -852,9 +852,9 @@ class NumberNode extends ASTNode {
      * @throws InterpreterError if the string cannot be parsed as a number
      */
     @Override
-    public double evaluate(Context context) throws InterpreterError {
+    public Result evaluate(Context context) throws InterpreterError {
         try {
-            return Double.parseDouble(value);
+            return new Result(Double.parseDouble(value));
         } catch (NumberFormatException e) {
             throw new InterpreterError("Invalid number format: " + value);
         }
@@ -948,42 +948,48 @@ class BinOpNode extends ASTNode {
      * @throws InterpreterError for runtime errors (division by zero, unknown operators)
      */
     @Override
-    public double evaluate(Context context) throws InterpreterError {
+    public Result evaluate(Context context) throws InterpreterError {
         // Recursively evaluate both operands with context
-        double leftVal = left.evaluate(context);
-        double rightVal = right.evaluate(context);
-        
+        Result leftVal = left.evaluate(context);
+        Result rightVal = right.evaluate(context);
+
         // Apply the appropriate operation based on token type
         String opType = opToken.getType();
         
-        if (CONSTANTS.TT_PLUS.equals(opType)) {
-            return leftVal + rightVal;
+        // Example: numeric add
+        if (CONSTANTS.TT_PLUS.equals(opToken.getType())) {
+            // Consider string concatenation: if either is string, concatenate
+            if (leftVal.isString() || rightVal.isString()) {
+                return new Result(leftVal.asString() + rightVal.asString());
+            }
+            return new Result(leftVal.asNumber() + rightVal.asNumber());
+
         } else if (CONSTANTS.TT_MINUS.equals(opType)) {
-            return leftVal - rightVal;
+            return new Result(leftVal.asNumber() - rightVal.asNumber());
         } else if (CONSTANTS.TT_MUL.equals(opType)) {
-            return leftVal * rightVal;
+            return new Result(leftVal.asNumber() * rightVal.asNumber());
         } else if (CONSTANTS.TT_DIV.equals(opType)) {
-            if (rightVal != 0) {
-                return leftVal / rightVal;
+            if (rightVal.asNumber() != 0) {
+                return new Result(leftVal.asNumber() / rightVal.asNumber());
             } else {
                 throw new InterpreterError("Division by zero");
             }
         } else if (CONSTANTS.TT_POW.equals(opType)) {
-            return Math.pow(leftVal, rightVal);
+            return new Result(Math.pow(leftVal.asNumber(), rightVal.asNumber()));
         
         // Comparison operators for future extensions
         } else if (CONSTANTS.TT_EE.equals(opType)) {
-            return (leftVal == rightVal) ? 1.0 : 0.0;  // "evermore"
+            return (leftVal.equals(rightVal)) ? new Result(1.0) : new Result(0.0);  // "evermore"
         } else if (CONSTANTS.TT_NE.equals(opType)) {
-            return (leftVal != rightVal) ? 1.0 : 0.0;  // "never"
+            return (!leftVal.equals(rightVal)) ? new Result(1.0) : new Result(0.0);  // "never"
         } else if (CONSTANTS.TT_LT.equals(opType)) {
-            return (leftVal < rightVal) ? 1.0 : 0.0;   // "lessen"
+            return (leftVal.asNumber() < rightVal.asNumber()) ? new Result(1.0) : new Result(0.0);   // "lessen"
         } else if (CONSTANTS.TT_GT.equals(opType)) {
-            return (leftVal > rightVal) ? 1.0 : 0.0;   // "heighten"
+            return (leftVal.asNumber() > rightVal.asNumber()) ? new Result(1.0) : new Result(0.0);   // "heighten"
         } else if (CONSTANTS.TT_LE.equals(opType)) {
-            return (leftVal <= rightVal) ? 1.0 : 0.0;  // "atmost"
+            return (leftVal.asNumber() <= rightVal.asNumber()) ? new Result(1.0) : new Result(0.0);  // "atmost"
         } else if (CONSTANTS.TT_GE.equals(opType)) {
-            return (leftVal >= rightVal) ? 1.0 : 0.0;  // "atleast"
+            return (leftVal.asNumber() >= rightVal.asNumber()) ? new Result(1.0) : new Result(0.0);  // "atleast"
 
         } else {
             throw new InterpreterError("Unknown operator: " + opType);
@@ -1043,17 +1049,18 @@ class UnaryOpNode extends ASTNode {
      * @throws InterpreterError for runtime errors (unknown operators)
      */
     @Override
-    public double evaluate(Context context) throws InterpreterError {
-        double value = node.evaluate(context);  // Pass context to operand
-        
+    public Result evaluate(Context context) throws InterpreterError {
+        Result value = node.evaluate(context);  // Pass context to operand
+
         String opType = opToken.getType();
-        
+
+        double numValue = value.asNumber();
         if (CONSTANTS.TT_MINUS.equals(opType)) {
-            return -value;
+            return new Result(-numValue);
         } else if (CONSTANTS.TT_PLUS.equals(opType)) {
             return value;
         } else if (CONSTANTS.TT_NOT.equals(opType)) {
-            return (value == .0) ? 1.0 : 0.0;  // Logical NOT: 1 -> 0, 0 -> 1
+            return (value.equals(new Result(0.0))) ? new Result(1.0) : new Result(0.0);  // Logical NOT: 1 -> 0, 0 -> 1
         } else {
             throw new InterpreterError("Unknown unary operator: " + opType);
         }
@@ -1092,19 +1099,21 @@ class AssignmentNode extends ASTNode {
     public ASTNode getValue() { return value; }
     
     @Override
-    public double evaluate(Context context) throws InterpreterError {
+    public Result evaluate(Context context) throws InterpreterError {
         if (value instanceof StringNode) {
-            // Store as string
-            StringNode stringNode = (StringNode) value;
-            String stringValue = stringNode.evaluateAsString(context);
-            context.setVariable(varName, stringValue);
-            return 0.0; // Return dummy value for string assignments
-        } else {
-            // Store as number
-            double result = value.evaluate(context);
-            context.setVariable(varName, result);
-            return result;
+            String s = ((StringNode) value).evaluateAsString(context);
+            context.setVariable(varName, s);
+            return new Result(0.0);
         }
+        Result res = value.evaluate(context);
+        if (res.isNumber()) {
+            context.setVariable(varName, res.asNumber());
+        } else if (res.isString()) {
+            context.setVariable(varName, res.asString());
+        } else if (res.isObject()) {
+            context.setVariable(varName, res.asObject());
+        }
+        return new Result(res.isNumber() ? res.asNumber() : 0.0);
     }
     
     @Override
@@ -1181,9 +1190,8 @@ class StringNode extends ASTNode {
     public String getValue() { return value; }
     
     @Override
-    public double evaluate(Context context) throws InterpreterError {
-        // For now, strings can't be used in numeric contexts
-        throw new InterpreterError("Cannot use string '" + value + "' in numeric expression");
+    public Result evaluate(Context context) throws InterpreterError {
+        return new Result(value);
     }
     
     // Add method to get string value
@@ -1257,9 +1265,8 @@ class BooleanNode extends ASTNode {
     public boolean getValue() { return value; }
     
     @Override
-    public double evaluate(Context context) throws InterpreterError {
-        // Convert boolean to numeric: true = 1.0, false = 0.0
-        return value ? 1.0 : 0.0;
+    public Result evaluate(Context context) throws InterpreterError {
+        return new Result(value ? 1.0 : 0.0);
     }
     
     @Override
@@ -1432,8 +1439,8 @@ class BlockNode extends ASTNode {
 /// 
 // Runtime helper to signal return from a function
 class ReturnException extends RuntimeException {
-    public final double value;
-    public ReturnException(double value) { super("return"); this.value = value; }
+    public final Result value;
+    public ReturnException(Result value) { super("return"); this.value = value; }
 }
 // Function container stored in context
 class JarlangFunction {
@@ -1465,11 +1472,25 @@ class FunctionDefNode extends ASTNode {
     }
 
     @Override
-    public double evaluate(Context context) throws InterpreterError {
-        // Capture current context as closure
-        JarlangFunction fn = new JarlangFunction(params, body, context);
-        context.setVariable(name, fn);
-        return 0.0;
+    public Result evaluate(Context context) throws InterpreterError {
+        Object obj = context.getVariable(name);
+        if (obj == null) throw new InterpreterError("Undefined function: " + name);
+        if (!(obj instanceof JarlangFunction)) throw new InterpreterError("Not a function: " + name);
+        JarlangFunction fn = (JarlangFunction)obj;
+        List<String> params = fn.getParams();
+        if (params.size() != args.size()) throw new InterpreterError(...);
+        Context child = new Context("fn:" + name, fn.getClosure(), new Position(0,0,0));
+        for (int i=0;i<params.size();i++) {
+            Result r = args.get(i).evaluate(context);
+            if (r.isNumber()) child.setVariable(params.get(i), r.asNumber());
+            else if (r.isString()) child.setVariable(params.get(i), r.asString());
+            else child.setVariable(params.get(i), r.asObject());
+        }
+        try {
+            return fn.getBody().evaluate(child);
+        } catch (ReturnException re) {
+            return re.value;
+        }
     }
 
     @Override
@@ -1558,15 +1579,19 @@ class Result {
     private ResultType type;
     
     public enum ResultType {
-        NUMBER, STRING
+        NUMBER, STRING, OBJECT
     }
     
     // Constructor for numeric results
-    public Result(double value) {
+    public Result(Object value) {
         this.value = value;
-        this.type = ResultType.NUMBER;
+        this.type = ResultType.OBJECT;
     }
-    
+
+    public boolean isObject() { return type == ResultType.OBJECT; }
+    public Object asObject() { if (isObject()) return value; throw new RuntimeException("Not an object"); }
+
+
     // Constructor for string results
     public Result(String value) {
         this.value = value;
