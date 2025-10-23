@@ -29,16 +29,19 @@ public class JarlangFileRunner {
         
 
         try {
+
             // Read file contents
             String content = readFile(filepath);
 
+            output.append("🏺 Executed Jarlang vase: ").append(filepath).append("\n");
+            output.append("=".repeat(50)).append("\n\n");
+
             // Tokenize whole file and parse into a single AST (can be a BlockNode)
             List<Token> tokens = JarlangRunners.runLexer(filepath, content);
-            JarlangParser parser = new JarlangParser(tokens);
+            // pass the actual filepath as the parser filename so errors report the file name
+            //TODO: fix this to pass filepath instead of content (MAY NEED TO CHANGE BACK)
+            JarlangParser parser = new JarlangParser(tokens, filepath);
             ASTNode ast = parser.parse();
-
-            output.append("🏺 Executing Jarlang vase: ").append(filepath).append("\n");
-            output.append("=".repeat(50)).append("\n\n");
 
             // Interpret the entire AST in the single global context
             double result = JarlangRunners.runInterpreter(ast, globalContext);
@@ -46,7 +49,16 @@ public class JarlangFileRunner {
             output.append("Result: ").append(result).append("\n");
             output.append("\n🗡️ Execution completed successfully!\n");
             return new ExecutionResult(output.toString(), true, null);
-
+        
+        } catch (SyntaxError e) {
+            output.append("❌ Failed to execute file: ").append(e.toString()).append("\n");
+            return new ExecutionResult(output.toString(), false, e.toString());
+        } catch (IllegalCharError e) {
+            output.append("❌ Failed to execute file: ").append(e.toString()).append("\n");
+            return new ExecutionResult(output.toString(), false, e.toString());
+        } catch (InterpreterError e) {
+            output.append("❌ Runtime error: ").append(e.toString()).append("\n");
+            return new ExecutionResult(output.toString(), false, e.toString());
         } catch (Exception e) {
             output.append("❌ Failed to execute file: ").append(e.getMessage()).append("\n");
             return new ExecutionResult(output.toString(), false, e.getMessage());
@@ -61,7 +73,7 @@ public class JarlangFileRunner {
         List<Token> tokens = JarlangRunners.runLexer("<file>", line);
         
         // Parse
-        JarlangParser parser = new JarlangParser(tokens);
+        JarlangParser parser = new JarlangParser(tokens, "<file>");
         ASTNode ast = parser.parse();
         
         // Check if this is a string variable lookup
@@ -178,7 +190,7 @@ public class JarlangFileRunner {
             // Parse & run module into its module context
             String content = readFile(canonical);
             List<Token> tokens = JarlangRunners.runLexer(canonical, content);
-            JarlangParser parser = new JarlangParser(tokens);
+            JarlangParser parser = new JarlangParser(tokens, content);
             ASTNode ast = parser.parse();
 
             JarlangRunners.runInterpreter(ast, moduleCtx);

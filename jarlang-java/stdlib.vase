@@ -1,6 +1,6 @@
 # small stdlib with helpers
 
-## Min max 
+## MIN MAX RELEVANT FUNCTIONS
 forge max (a, b) {
   judge a > b mend a orjudge b > a mend b
 }
@@ -12,6 +12,8 @@ forge min (a, b) {
 forge clamp (x, lo, hi) {
   judge x < lo mend lo orjudge x > hi mend hi orjudge mend x
 }
+
+##SIMPLE NUEMRIC
 
 forge commune (a, b) {
   mend a + b
@@ -40,6 +42,9 @@ forge circle_area (r){
 forge add1(x) {
   mend x + 1
 }
+
+
+#MORE ADVANCED NUMERICS
 
 forge fact(n) {
   judge n < 2 mend 1 orjudge mend n * fact(n - 1)
@@ -75,8 +80,6 @@ forge approx_equal(a, b, eps) {
   judge abs(a - b) < eps mend 1 orjudge mend 0
 }
 
-#add gcd function later
-
 forge gcd(a, b) {
   judge a == 0 mend b orjudge b == 0 mend a
   lest a != b {
@@ -85,6 +88,7 @@ forge gcd(a, b) {
   mend a
 }
 
+# TODO: LCM runs into infinite loop issues with some entries
 forge lcm(a, b) {
   mend (a * b) / gcd(a, b)
 }
@@ -107,4 +111,71 @@ forge pow_int(a, n) {
 
 forge invert_sign(n) {
   mend n * -1
+}
+
+forge mod(a, b) {
+  # handle division-by-zero defensively
+  judge b == 0 mend 0
+  # make positive for a simple remainder
+  wield aa a
+  lest aa >= b {
+    aa = aa - b
+  }
+  mend aa
+}
+
+forge sign(x) {
+  judge x < 0 mend -1 orjudge x == 0 mend 0 orjudge mend 1
+}
+
+forge sqrt(x) {
+  mend x ^ (1/2)
+}
+
+forge map_range(x, inMin, inMax, outMin, outMax) {
+  mend outMin + ( (x - inMin) * (outMax - outMin) ) / (inMax - inMin)
+}
+
+forge is_even(n) {
+  # using repeated subtraction of 2
+  wield x n
+  while x >= 2 {
+    x = x - 2
+  }
+  judge x == 0 mend 1 orjudge mend 0
+}
+
+forge is_odd(n) {
+  mend 1 - is_even(n)
+}
+
+forge is_prime(n) {
+  judge n < 2 mend 0
+  judge n == 2 mend 1
+  judge mod(n,2) == 0 mend 0
+  wield i 3
+  while i * i <= n {
+    judge mod(n, i) == 0 mend 0
+    i = i + 2
+  }
+  mend 1
+}
+
+forge deg2rad(d) {
+  mend d * (pi / 180)
+}
+
+forge rad2deg(r) {
+  mend r * (180 / pi)
+}
+
+forge abs_int(x) {
+  judge x < 0 mend -x orjudge mend x
+}
+
+forge safe_lcm(a, b) {
+  wield aa abs_int(a)
+  wield bb abs_int(b)
+  judge aa == 0 mend 0 orjudge bb == 0 mend 0
+  mend (aa * bb) / gcd(aa, bb)
 }

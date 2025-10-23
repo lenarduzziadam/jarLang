@@ -25,7 +25,7 @@ chant add1(41)           # expect 42
 # Test variable assignment and use
 wield x 10
 chant add1(x)            # expect 11
-chant add1(add1(add1(commune(x,x))))
+chant add1(add1(add1(commune(x,x)))) #expect 23 (testing for nested function functionality)
 
 # More complex functions testing
 chant fact(0)    # expect 1

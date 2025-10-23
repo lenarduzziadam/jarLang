@@ -230,7 +230,7 @@ public class JarlangShell {
      */
     private ASTNode parse(List<Token> tokens) throws ParserException {
         try {
-            JarlangParser parser = new JarlangParser(tokens);
+            JarlangParser parser = new JarlangParser(tokens, "<stdin>");
             return parser.parse();
         } catch (SyntaxError e) {
             throw new ParserException(e.toString());
