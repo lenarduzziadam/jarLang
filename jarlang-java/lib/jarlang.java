@@ -784,7 +784,6 @@ abstract class ASTNode {
      * @return The numeric result of evaluating this node
      * @throws InterpreterError if evaluation fails (e.g., division by zero)
      */
-    //TODO: public abstract double evaluate() throws InterpreterError;
     // Modify ASTNode abstract class:
     public abstract Result evaluate(Context context) throws InterpreterError;
 
@@ -1294,21 +1293,21 @@ class IfNode extends ASTNode {
     }
 
     @Override
-    public double evaluate(Context context) throws InterpreterError {
+    public Result evaluate(Context context) throws InterpreterError {
         for (int i = 0; i < conditions.size(); i++) {
             ASTNode cond = conditions.get(i);
             // null condition is treated as unconditional 'else'
             if (cond == null) {
                 return branches.get(i).evaluate(context);
             }
-            double cv = cond.evaluate(context);
+            Result cv = cond.evaluate(context);
             // C-style: 0.0 == false, 1.0 == true
-            if (cv == 1.0) {
+            if (cv != null && cv.isNumber() && cv.asNumber() == 1.0) {
                 return branches.get(i).evaluate(context);
             }
         }
         // No branch matched -> return false value
-        return 0.0;
+        return new Result(0.0);
     }
 
     @Override
@@ -1345,11 +1344,11 @@ class WhileNode extends ASTNode {
     public ASTNode getBody() { return body; }
     
     @Override
-    public double evaluate(Context context) throws InterpreterError {
-        double lastResult = 0.0;
-        
+    public Result evaluate(Context context) throws InterpreterError {
+        Result lastResult = new Result(0.0);
+
         // Keep executing while condition is true (non-zero)
-        while (condition.evaluate(context) != 0.0) {
+        while (condition.evaluate(context).asNumber() != 0.0) {
             lastResult = body.evaluate(context);
         }
         
@@ -1378,8 +1377,8 @@ class BlockNode extends ASTNode {
     public List<ASTNode> getStatements() { return statements; }
     
     @Override
-    public double evaluate(Context context) throws InterpreterError {
-        double lastResult = 0.0;
+    public Result evaluate(Context context) throws InterpreterError {
+        Result lastResult = new Result(0.0);
         
         // Execute all statements in sequence
         for (ASTNode statement : statements) {
@@ -1414,11 +1413,11 @@ class BlockNode extends ASTNode {
         public String getPath() { return path; }
 
         @Override
-        public double evaluate(Context context) throws InterpreterError {
+        public Result evaluate(Context context) throws InterpreterError {
             try {
                 // Execute the imported file into the provided context
                 JarlangFileRunner.runFileIntoContext(path, context);
-                return 0.0;
+                return new Result(0.0);
             } catch (Exception e) {
                 throw new InterpreterError("Failed to import '" + path + "': " + e.getMessage());
             }
@@ -1473,24 +1472,11 @@ class FunctionDefNode extends ASTNode {
 
     @Override
     public Result evaluate(Context context) throws InterpreterError {
-        Object obj = context.getVariable(name);
-        if (obj == null) throw new InterpreterError("Undefined function: " + name);
-        if (!(obj instanceof JarlangFunction)) throw new InterpreterError("Not a function: " + name);
-        JarlangFunction fn = (JarlangFunction)obj;
-        List<String> params = fn.getParams();
-        if (params.size() != args.size()) throw new InterpreterError("Function '" + name + "' expected " + params.size() + " args, got " + args.size());
-        Context child = new Context("fn:" + name, fn.getClosure(), new Position(0,0,0));
-        for (int i=0;i<params.size();i++) {
-            Result r = args.get(i).evaluate(context);
-            if (r.isNumber()) child.setVariable(params.get(i), r.asNumber());
-            else if (r.isString()) child.setVariable(params.get(i), r.asString());
-            else child.setVariable(params.get(i), r.asObject());
-        }
-        try {
-            return fn.getBody().evaluate(child);
-        } catch (ReturnException re) {
-            return re.value;
-        }
+        // A FunctionDefNode should define (register) a function in the current context.
+        // Create a JarlangFunction closure capturing the current context and store it.
+        JarlangFunction fn = new JarlangFunction(new ArrayList<>(this.params), this.body, context);
+        context.setVariable(this.name, fn);
+        return new Result(0.0);
     }
 
     @Override
@@ -1513,7 +1499,7 @@ class FunctionCallNode extends ASTNode {
     }
 
     @Override
-    public double evaluate(Context context) throws InterpreterError {
+    public Result evaluate(Context context) throws InterpreterError {
         Object obj = context.getVariable(name);
         if (obj == null || !(obj instanceof JarlangFunction)) {
             throw new InterpreterError("Undefined function: " + name);
@@ -1528,12 +1514,12 @@ class FunctionCallNode extends ASTNode {
         Context child = new Context("fn:" + name, fn.getClosure(), new Position(0,0,0));
         // Evaluate args in caller context and bind
         for (int i = 0; i < params.size(); i++) {
-            double val = args.get(i).evaluate(context);
+            Result val = args.get(i).evaluate(context);
             child.setVariable(params.get(i), val);
         }
 
         try {
-            double res = fn.getBody().evaluate(child);
+            Result res = fn.getBody().evaluate(child);
             return res;
         } catch (ReturnException r) {
             return r.value;
@@ -1556,8 +1542,8 @@ class ReturnNode extends ASTNode {
     public ReturnNode(ASTNode expr) { this.expr = expr; }
 
     @Override
-    public double evaluate(Context context) throws InterpreterError {
-        double v = expr.evaluate(context);
+    public Result evaluate(Context context) throws InterpreterError {
+        Result v = expr.evaluate(context);
         throw new ReturnException(v);
     }
 
@@ -2479,13 +2465,13 @@ class JarlangInterpreter {
      * @throws InterpreterError if evaluation encounters runtime errors
      */
     // Update the interpret method
-    public double interpret(ASTNode ast, Context context) throws InterpreterError {
+    public Result interpret(ASTNode ast, Context context) throws InterpreterError {
         this.context = context;
         return visit(ast);
     }
     
     // Keep existing interpret method for backward compatibility
-    public double interpret(ASTNode ast) throws InterpreterError {
+    public Result interpret(ASTNode ast) throws InterpreterError {
         Context globalContext = new Context("global");
         return interpret(ast, globalContext);
     }
@@ -2501,7 +2487,7 @@ class JarlangInterpreter {
      * @return The numeric result of evaluating the node
      * @throws InterpreterError if evaluation fails
      */
-    public double visit(ASTNode node) throws InterpreterError {
+    public Result visit(ASTNode node) throws InterpreterError {
         return node.evaluate(context);  // Delegate to node's evaluation method
     }
 }
@@ -2621,12 +2607,12 @@ class JarlangRunners {
      * @return Computed numeric result
      * @throws InterpreterError if evaluation fails (e.g., division by zero)
      */
-    public static double runInterpreter(ASTNode ast, Context context) throws InterpreterError {
+    public static Result runInterpreter(ASTNode ast, Context context) throws InterpreterError {
         JarlangInterpreter interpreter = new JarlangInterpreter();
         // Future: Pass context to interpreter for variable/function lookup
         return interpreter.interpret(ast, context);
     }
-    public static double runInterpreter(ASTNode ast) throws InterpreterError {
+    public static Result runInterpreter(ASTNode ast) throws InterpreterError {
         JarlangInterpreter interpreter = new JarlangInterpreter();
         Context context = new Context("<global>"); // Create a global context
         return interpreter.interpret(ast, context);

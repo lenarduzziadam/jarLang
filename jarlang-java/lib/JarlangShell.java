@@ -262,8 +262,8 @@ public class JarlangShell {
             }
             
             // For all other expressions, evaluate as number
-            double numResult = JarlangRunners.runInterpreter(ast, globalContext);
-            return new Result(numResult);
+            Result numResult = JarlangRunners.runInterpreter(ast, globalContext);
+            return numResult;
             
         } catch (InterpreterError e) {
             throw new InterpreterException(e.toString());
