@@ -139,7 +139,7 @@ forge map_range(x, inMin, inMax, outMin, outMax) {
 forge is_even(n) {
   # using repeated subtraction of 2
   wield x n
-  while x >= 2 {
+  lest x >= 2 {
     x = x - 2
   }
   judge x == 0 mend 1 orjudge mend 0
@@ -154,7 +154,7 @@ forge is_prime(n) {
   judge n == 2 mend 1
   judge mod(n,2) == 0 mend 0
   wield i 3
-  while i * i <= n {
+  lest (i * i) <= n {
     judge mod(n, i) == 0 mend 0
     i = i + 2
   }
