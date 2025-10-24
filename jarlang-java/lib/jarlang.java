@@ -1142,18 +1142,29 @@ class VariableNode extends ASTNode {
         if (value == null) {
             throw new InterpreterError("Undefined variable: " + varName);
         }
+
+        // If the value is already a raw number type, return NUMBER Result
         if (value instanceof Double) {
             return new Result((Double) value);
-        } else if (value instanceof String) {
-            try {
-                return new Result(Double.parseDouble((String) value));
-            } catch (NumberFormatException e) {
-                throw new InterpreterError("Variable '" + varName + "' is not a number");
-            }
-        } else {
-            throw new InterpreterError("Variable '" + varName + "' has unsupported type");
         }
-        // Future enhancement: support other types (e.g., strings)
+        if (value instanceof Integer || value instanceof Float || value instanceof Long) {
+            // normalize to double
+            double d = ((Number) value).doubleValue();
+            return new Result(d);
+        }
+
+        // If the value is a String, return a STRING Result (do NOT try to parse to number)
+        if (value instanceof String) {
+            return new Result((String) value);
+        }
+
+        // If you ever stored Result objects into context, unwrap them here
+        if (value instanceof Result) {
+            return (Result) value;
+        }
+
+        // For functions or other objects, return as OBJECT Result (or adjust to your design)
+        return new Result(value);
     }
     // Add method to get string value
     public String evaluateAsString(Context context) throws InterpreterError {
