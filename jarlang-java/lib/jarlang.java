@@ -1138,16 +1138,16 @@ class VariableNode extends ASTNode {
     public String getVarName() { return varName; }
     
     @Override
-    public double evaluate(Context context) throws InterpreterError {
+    public Result evaluate(Context context) throws InterpreterError {
         Object value = context.getVariable(varName);
         if (value == null) {
             throw new InterpreterError("Undefined variable: " + varName);
         }
         if (value instanceof Double) {
-            return (Double) value;
+            return new Result((Double) value);
         } else if (value instanceof String) {
             try {
-                return Double.parseDouble((String) value);
+                return new Result(Double.parseDouble((String) value));
             } catch (NumberFormatException e) {
                 throw new InterpreterError("Variable '" + varName + "' is not a number");
             }
@@ -1221,7 +1221,7 @@ class ChantNode extends ASTNode {
     public ASTNode getExpression() { return expression; }
     
     @Override
-    public double evaluate(Context context) throws InterpreterError {
+    public Result evaluate(Context context) throws InterpreterError {
         // Check if expression is a string or numeric
         if (expression instanceof StringNode) {
             StringNode stringNode = (StringNode) expression;
@@ -1237,10 +1237,10 @@ class ChantNode extends ASTNode {
             }
         } else {
             // Numeric expression
-            double result = expression.evaluate(context);
+            Result result = expression.evaluate(context);
             System.out.println(result);
         }
-        return 0.0; // Print statements don't return meaningful values
+        return new Result(0); // Print statements don't return meaningful values
     }
     
     @Override
@@ -1478,7 +1478,7 @@ class FunctionDefNode extends ASTNode {
         if (!(obj instanceof JarlangFunction)) throw new InterpreterError("Not a function: " + name);
         JarlangFunction fn = (JarlangFunction)obj;
         List<String> params = fn.getParams();
-        if (params.size() != args.size()) throw new InterpreterError(...);
+        if (params.size() != args.size()) throw new InterpreterError("Function '" + name + "' expected " + params.size() + " args, got " + args.size());
         Context child = new Context("fn:" + name, fn.getClosure(), new Position(0,0,0));
         for (int i=0;i<params.size();i++) {
             Result r = args.get(i).evaluate(context);
