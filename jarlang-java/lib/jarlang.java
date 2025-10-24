@@ -1515,7 +1515,14 @@ class FunctionCallNode extends ASTNode {
         // Evaluate args in caller context and bind
         for (int i = 0; i < params.size(); i++) {
             Result val = args.get(i).evaluate(context);
-            child.setVariable(params.get(i), val);
+            // store raw value in context (double or string or object)
+            if (val.isNumber()) {
+                child.setVariable(params.get(i), val.asNumber());
+            } else if (val.isString()) {
+                child.setVariable(params.get(i), val.asString());
+            } else {
+                child.setVariable(params.get(i), val.asObject());
+            }
         }
 
         try {
@@ -1556,61 +1563,81 @@ class ReturnNode extends ASTNode {
 
 
 
-
 /**
- * Unified result type that can hold either numeric or string values
+ * Unified result type that can hold either numeric, string, or object values
  */
 class Result {
     private Object value;
     private ResultType type;
-    
-    public enum ResultType {
-        NUMBER, STRING, OBJECT
-    }
-    
-    // Constructor for numeric results
-    public Result(Object value) {
-        this.value = value;
-        this.type = ResultType.OBJECT;
+
+    public enum ResultType { NUMBER, STRING, OBJECT }
+
+    // Numeric constructor
+    public Result(double number) {
+        this.value = number;
+        this.type = ResultType.NUMBER;
     }
 
-    public boolean isObject() { return type == ResultType.OBJECT; }
-    public Object asObject() { if (isObject()) return value; throw new RuntimeException("Not an object"); }
-
-
-    // Constructor for string results
-    public Result(String value) {
-        this.value = value;
+    // String constructor
+    public Result(String s) {
+        this.value = s;
         this.type = ResultType.STRING;
     }
-    
-    // Getters
-    public Object getValue() { return value; }
-    public ResultType getType() { return type; }
-    
+
+    // Generic object constructor: detect Double/String specially
+    public Result(Object obj) {
+        this.value = obj;
+        if (obj instanceof Double || obj instanceof Integer || obj instanceof Float) {
+            // Normalize numeric types to Double for simplicity
+            this.value = ((Number) obj).doubleValue();
+            this.type = ResultType.NUMBER;
+        } else if (obj instanceof String) {
+            this.type = ResultType.STRING;
+        } else {
+            this.type = ResultType.OBJECT;
+        }
+    }
+
     public boolean isNumber() { return type == ResultType.NUMBER; }
     public boolean isString() { return type == ResultType.STRING; }
-    
+    public boolean isObject() { return type == ResultType.OBJECT; }
+
     public double asNumber() {
         if (isNumber()) {
             return (Double) value;
         }
         throw new RuntimeException("Result is not a number");
     }
-    
+
     public String asString() {
         if (isString()) {
             return (String) value;
         }
-        return value.toString(); // Convert number to string
+        // convert numeric or object to string
+        return value == null ? "null" : value.toString();
     }
-    
+
+    public Object asObject() {
+        if (isObject()) return value;
+        return value; // allow returning primitive-wrapped value too
+    }
+
+    public Object getValue() { return value; }
+    public ResultType getType() { return type; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Result)) return false;
+        Result r = (Result) o;
+        return Objects.equals(this.value, r.value) && this.type == r.type;
+    }
+
     @Override
     public String toString() {
         if (isString()) {
-            return "\"" + value + "\"";
+            return (String) value;
         }
-        return value.toString();
+        return value == null ? "null" : value.toString();
     }
 }
 
