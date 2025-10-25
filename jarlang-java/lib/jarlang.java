@@ -784,9 +784,8 @@ abstract class ASTNode {
      * @return The numeric result of evaluating this node
      * @throws InterpreterError if evaluation fails (e.g., division by zero)
      */
-    //TODO: public abstract double evaluate() throws InterpreterError;
     // Modify ASTNode abstract class:
-    public abstract double evaluate(Context context) throws InterpreterError;
+    public abstract Result evaluate(Context context) throws InterpreterError;
 
 // Update all evaluate methods in NumberNode, BinOpNode, etc. to accept Context
     
@@ -852,9 +851,9 @@ class NumberNode extends ASTNode {
      * @throws InterpreterError if the string cannot be parsed as a number
      */
     @Override
-    public double evaluate(Context context) throws InterpreterError {
+    public Result evaluate(Context context) throws InterpreterError {
         try {
-            return Double.parseDouble(value);
+            return new Result(Double.parseDouble(value));
         } catch (NumberFormatException e) {
             throw new InterpreterError("Invalid number format: " + value);
         }
@@ -948,42 +947,48 @@ class BinOpNode extends ASTNode {
      * @throws InterpreterError for runtime errors (division by zero, unknown operators)
      */
     @Override
-    public double evaluate(Context context) throws InterpreterError {
+    public Result evaluate(Context context) throws InterpreterError {
         // Recursively evaluate both operands with context
-        double leftVal = left.evaluate(context);
-        double rightVal = right.evaluate(context);
-        
+        Result leftVal = left.evaluate(context);
+        Result rightVal = right.evaluate(context);
+
         // Apply the appropriate operation based on token type
         String opType = opToken.getType();
         
-        if (CONSTANTS.TT_PLUS.equals(opType)) {
-            return leftVal + rightVal;
+        // Example: numeric add
+        if (CONSTANTS.TT_PLUS.equals(opToken.getType())) {
+            // Consider string concatenation: if either is string, concatenate
+            if (leftVal.isString() || rightVal.isString()) {
+                return new Result(leftVal.asString() + rightVal.asString());
+            }
+            return new Result(leftVal.asNumber() + rightVal.asNumber());
+
         } else if (CONSTANTS.TT_MINUS.equals(opType)) {
-            return leftVal - rightVal;
+            return new Result(leftVal.asNumber() - rightVal.asNumber());
         } else if (CONSTANTS.TT_MUL.equals(opType)) {
-            return leftVal * rightVal;
+            return new Result(leftVal.asNumber() * rightVal.asNumber());
         } else if (CONSTANTS.TT_DIV.equals(opType)) {
-            if (rightVal != 0) {
-                return leftVal / rightVal;
+            if (rightVal.asNumber() != 0) {
+                return new Result(leftVal.asNumber() / rightVal.asNumber());
             } else {
                 throw new InterpreterError("Division by zero");
             }
         } else if (CONSTANTS.TT_POW.equals(opType)) {
-            return Math.pow(leftVal, rightVal);
+            return new Result(Math.pow(leftVal.asNumber(), rightVal.asNumber()));
         
         // Comparison operators for future extensions
         } else if (CONSTANTS.TT_EE.equals(opType)) {
-            return (leftVal == rightVal) ? 1.0 : 0.0;  // "evermore"
+            return (leftVal.equals(rightVal)) ? new Result(1.0) : new Result(0.0);  // "evermore"
         } else if (CONSTANTS.TT_NE.equals(opType)) {
-            return (leftVal != rightVal) ? 1.0 : 0.0;  // "never"
+            return (!leftVal.equals(rightVal)) ? new Result(1.0) : new Result(0.0);  // "never"
         } else if (CONSTANTS.TT_LT.equals(opType)) {
-            return (leftVal < rightVal) ? 1.0 : 0.0;   // "lessen"
+            return (leftVal.asNumber() < rightVal.asNumber()) ? new Result(1.0) : new Result(0.0);   // "lessen"
         } else if (CONSTANTS.TT_GT.equals(opType)) {
-            return (leftVal > rightVal) ? 1.0 : 0.0;   // "heighten"
+            return (leftVal.asNumber() > rightVal.asNumber()) ? new Result(1.0) : new Result(0.0);   // "heighten"
         } else if (CONSTANTS.TT_LE.equals(opType)) {
-            return (leftVal <= rightVal) ? 1.0 : 0.0;  // "atmost"
+            return (leftVal.asNumber() <= rightVal.asNumber()) ? new Result(1.0) : new Result(0.0);  // "atmost"
         } else if (CONSTANTS.TT_GE.equals(opType)) {
-            return (leftVal >= rightVal) ? 1.0 : 0.0;  // "atleast"
+            return (leftVal.asNumber() >= rightVal.asNumber()) ? new Result(1.0) : new Result(0.0);  // "atleast"
 
         } else {
             throw new InterpreterError("Unknown operator: " + opType);
@@ -1043,17 +1048,18 @@ class UnaryOpNode extends ASTNode {
      * @throws InterpreterError for runtime errors (unknown operators)
      */
     @Override
-    public double evaluate(Context context) throws InterpreterError {
-        double value = node.evaluate(context);  // Pass context to operand
-        
+    public Result evaluate(Context context) throws InterpreterError {
+        Result value = node.evaluate(context);  // Pass context to operand
+
         String opType = opToken.getType();
-        
+
+        double numValue = value.asNumber();
         if (CONSTANTS.TT_MINUS.equals(opType)) {
-            return -value;
+            return new Result(-numValue);
         } else if (CONSTANTS.TT_PLUS.equals(opType)) {
             return value;
         } else if (CONSTANTS.TT_NOT.equals(opType)) {
-            return (value == .0) ? 1.0 : 0.0;  // Logical NOT: 1 -> 0, 0 -> 1
+            return (value.equals(new Result(0.0))) ? new Result(1.0) : new Result(0.0);  // Logical NOT: 1 -> 0, 0 -> 1
         } else {
             throw new InterpreterError("Unknown unary operator: " + opType);
         }
@@ -1092,19 +1098,21 @@ class AssignmentNode extends ASTNode {
     public ASTNode getValue() { return value; }
     
     @Override
-    public double evaluate(Context context) throws InterpreterError {
+    public Result evaluate(Context context) throws InterpreterError {
         if (value instanceof StringNode) {
-            // Store as string
-            StringNode stringNode = (StringNode) value;
-            String stringValue = stringNode.evaluateAsString(context);
-            context.setVariable(varName, stringValue);
-            return 0.0; // Return dummy value for string assignments
-        } else {
-            // Store as number
-            double result = value.evaluate(context);
-            context.setVariable(varName, result);
-            return result;
+            String s = ((StringNode) value).evaluateAsString(context);
+            context.setVariable(varName, s);
+            return new Result(0.0);
         }
+        Result res = value.evaluate(context);
+        if (res.isNumber()) {
+            context.setVariable(varName, res.asNumber());
+        } else if (res.isString()) {
+            context.setVariable(varName, res.asString());
+        } else if (res.isObject()) {
+            context.setVariable(varName, res.asObject());
+        }
+        return new Result(res.isNumber() ? res.asNumber() : 0.0);
     }
     
     @Override
@@ -1129,23 +1137,34 @@ class VariableNode extends ASTNode {
     public String getVarName() { return varName; }
     
     @Override
-    public double evaluate(Context context) throws InterpreterError {
+    public Result evaluate(Context context) throws InterpreterError {
         Object value = context.getVariable(varName);
         if (value == null) {
             throw new InterpreterError("Undefined variable: " + varName);
         }
+
+        // If the value is already a raw number type, return NUMBER Result
         if (value instanceof Double) {
-            return (Double) value;
-        } else if (value instanceof String) {
-            try {
-                return Double.parseDouble((String) value);
-            } catch (NumberFormatException e) {
-                throw new InterpreterError("Variable '" + varName + "' is not a number");
-            }
-        } else {
-            throw new InterpreterError("Variable '" + varName + "' has unsupported type");
+            return new Result((Double) value);
         }
-        // Future enhancement: support other types (e.g., strings)
+        if (value instanceof Integer || value instanceof Float || value instanceof Long) {
+            // normalize to double
+            double d = ((Number) value).doubleValue();
+            return new Result(d);
+        }
+
+        // If the value is a String, return a STRING Result (do NOT try to parse to number)
+        if (value instanceof String) {
+            return new Result((String) value);
+        }
+
+        // If you ever stored Result objects into context, unwrap them here
+        if (value instanceof Result) {
+            return (Result) value;
+        }
+
+        // For functions or other objects, return as OBJECT Result (or adjust to your design)
+        return new Result(value);
     }
     // Add method to get string value
     public String evaluateAsString(Context context) throws InterpreterError {
@@ -1181,9 +1200,8 @@ class StringNode extends ASTNode {
     public String getValue() { return value; }
     
     @Override
-    public double evaluate(Context context) throws InterpreterError {
-        // For now, strings can't be used in numeric contexts
-        throw new InterpreterError("Cannot use string '" + value + "' in numeric expression");
+    public Result evaluate(Context context) throws InterpreterError {
+        return new Result(value);
     }
     
     // Add method to get string value
@@ -1213,7 +1231,7 @@ class ChantNode extends ASTNode {
     public ASTNode getExpression() { return expression; }
     
     @Override
-    public double evaluate(Context context) throws InterpreterError {
+    public Result evaluate(Context context) throws InterpreterError {
         // Check if expression is a string or numeric
         if (expression instanceof StringNode) {
             StringNode stringNode = (StringNode) expression;
@@ -1229,10 +1247,10 @@ class ChantNode extends ASTNode {
             }
         } else {
             // Numeric expression
-            double result = expression.evaluate(context);
+            Result result = expression.evaluate(context);
             System.out.println(result);
         }
-        return 0.0; // Print statements don't return meaningful values
+        return new Result(0); // Print statements don't return meaningful values
     }
     
     @Override
@@ -1257,9 +1275,8 @@ class BooleanNode extends ASTNode {
     public boolean getValue() { return value; }
     
     @Override
-    public double evaluate(Context context) throws InterpreterError {
-        // Convert boolean to numeric: true = 1.0, false = 0.0
-        return value ? 1.0 : 0.0;
+    public Result evaluate(Context context) throws InterpreterError {
+        return new Result(value ? 1.0 : 0.0);
     }
     
     @Override
@@ -1287,21 +1304,21 @@ class IfNode extends ASTNode {
     }
 
     @Override
-    public double evaluate(Context context) throws InterpreterError {
+    public Result evaluate(Context context) throws InterpreterError {
         for (int i = 0; i < conditions.size(); i++) {
             ASTNode cond = conditions.get(i);
             // null condition is treated as unconditional 'else'
             if (cond == null) {
                 return branches.get(i).evaluate(context);
             }
-            double cv = cond.evaluate(context);
+            Result cv = cond.evaluate(context);
             // C-style: 0.0 == false, 1.0 == true
-            if (cv == 1.0) {
+            if (cv != null && cv.isNumber() && cv.asNumber() == 1.0) {
                 return branches.get(i).evaluate(context);
             }
         }
         // No branch matched -> return false value
-        return 0.0;
+        return new Result(0.0);
     }
 
     @Override
@@ -1338,11 +1355,11 @@ class WhileNode extends ASTNode {
     public ASTNode getBody() { return body; }
     
     @Override
-    public double evaluate(Context context) throws InterpreterError {
-        double lastResult = 0.0;
-        
+    public Result evaluate(Context context) throws InterpreterError {
+        Result lastResult = new Result(0.0);
+
         // Keep executing while condition is true (non-zero)
-        while (condition.evaluate(context) != 0.0) {
+        while (condition.evaluate(context).asNumber() != 0.0) {
             lastResult = body.evaluate(context);
         }
         
@@ -1371,8 +1388,8 @@ class BlockNode extends ASTNode {
     public List<ASTNode> getStatements() { return statements; }
     
     @Override
-    public double evaluate(Context context) throws InterpreterError {
-        double lastResult = 0.0;
+    public Result evaluate(Context context) throws InterpreterError {
+        Result lastResult = new Result(0.0);
         
         // Execute all statements in sequence
         for (ASTNode statement : statements) {
@@ -1407,11 +1424,11 @@ class BlockNode extends ASTNode {
         public String getPath() { return path; }
 
         @Override
-        public double evaluate(Context context) throws InterpreterError {
+        public Result evaluate(Context context) throws InterpreterError {
             try {
                 // Execute the imported file into the provided context
                 JarlangFileRunner.runFileIntoContext(path, context);
-                return 0.0;
+                return new Result(0.0);
             } catch (Exception e) {
                 throw new InterpreterError("Failed to import '" + path + "': " + e.getMessage());
             }
@@ -1432,8 +1449,8 @@ class BlockNode extends ASTNode {
 /// 
 // Runtime helper to signal return from a function
 class ReturnException extends RuntimeException {
-    public final double value;
-    public ReturnException(double value) { super("return"); this.value = value; }
+    public final Result value;
+    public ReturnException(Result value) { super("return"); this.value = value; }
 }
 // Function container stored in context
 class JarlangFunction {
@@ -1465,11 +1482,12 @@ class FunctionDefNode extends ASTNode {
     }
 
     @Override
-    public double evaluate(Context context) throws InterpreterError {
-        // Capture current context as closure
-        JarlangFunction fn = new JarlangFunction(params, body, context);
-        context.setVariable(name, fn);
-        return 0.0;
+    public Result evaluate(Context context) throws InterpreterError {
+        // A FunctionDefNode should define (register) a function in the current context.
+        // Create a JarlangFunction closure capturing the current context and store it.
+        JarlangFunction fn = new JarlangFunction(new ArrayList<>(this.params), this.body, context);
+        context.setVariable(this.name, fn);
+        return new Result(0.0);
     }
 
     @Override
@@ -1492,7 +1510,7 @@ class FunctionCallNode extends ASTNode {
     }
 
     @Override
-    public double evaluate(Context context) throws InterpreterError {
+    public Result evaluate(Context context) throws InterpreterError {
         Object obj = context.getVariable(name);
         if (obj == null || !(obj instanceof JarlangFunction)) {
             throw new InterpreterError("Undefined function: " + name);
@@ -1507,12 +1525,19 @@ class FunctionCallNode extends ASTNode {
         Context child = new Context("fn:" + name, fn.getClosure(), new Position(0,0,0));
         // Evaluate args in caller context and bind
         for (int i = 0; i < params.size(); i++) {
-            double val = args.get(i).evaluate(context);
-            child.setVariable(params.get(i), val);
+            Result val = args.get(i).evaluate(context);
+            // store raw value in context (double or string or object)
+            if (val.isNumber()) {
+                child.setVariable(params.get(i), val.asNumber());
+            } else if (val.isString()) {
+                child.setVariable(params.get(i), val.asString());
+            } else {
+                child.setVariable(params.get(i), val.asObject());
+            }
         }
 
         try {
-            double res = fn.getBody().evaluate(child);
+            Result res = fn.getBody().evaluate(child);
             return res;
         } catch (ReturnException r) {
             return r.value;
@@ -1535,8 +1560,8 @@ class ReturnNode extends ASTNode {
     public ReturnNode(ASTNode expr) { this.expr = expr; }
 
     @Override
-    public double evaluate(Context context) throws InterpreterError {
-        double v = expr.evaluate(context);
+    public Result evaluate(Context context) throws InterpreterError {
+        Result v = expr.evaluate(context);
         throw new ReturnException(v);
     }
 
@@ -1549,57 +1574,81 @@ class ReturnNode extends ASTNode {
 
 
 
-
 /**
- * Unified result type that can hold either numeric or string values
+ * Unified result type that can hold either numeric, string, or object values
  */
 class Result {
     private Object value;
     private ResultType type;
-    
-    public enum ResultType {
-        NUMBER, STRING
-    }
-    
-    // Constructor for numeric results
-    public Result(double value) {
-        this.value = value;
+
+    public enum ResultType { NUMBER, STRING, OBJECT }
+
+    // Numeric constructor
+    public Result(double number) {
+        this.value = number;
         this.type = ResultType.NUMBER;
     }
-    
-    // Constructor for string results
-    public Result(String value) {
-        this.value = value;
+
+    // String constructor
+    public Result(String s) {
+        this.value = s;
         this.type = ResultType.STRING;
     }
-    
-    // Getters
-    public Object getValue() { return value; }
-    public ResultType getType() { return type; }
-    
+
+    // Generic object constructor: detect Double/String specially
+    public Result(Object obj) {
+        this.value = obj;
+        if (obj instanceof Double || obj instanceof Integer || obj instanceof Float) {
+            // Normalize numeric types to Double for simplicity
+            this.value = ((Number) obj).doubleValue();
+            this.type = ResultType.NUMBER;
+        } else if (obj instanceof String) {
+            this.type = ResultType.STRING;
+        } else {
+            this.type = ResultType.OBJECT;
+        }
+    }
+
     public boolean isNumber() { return type == ResultType.NUMBER; }
     public boolean isString() { return type == ResultType.STRING; }
-    
+    public boolean isObject() { return type == ResultType.OBJECT; }
+
     public double asNumber() {
         if (isNumber()) {
             return (Double) value;
         }
         throw new RuntimeException("Result is not a number");
     }
-    
+
     public String asString() {
         if (isString()) {
             return (String) value;
         }
-        return value.toString(); // Convert number to string
+        // convert numeric or object to string
+        return value == null ? "null" : value.toString();
     }
-    
+
+    public Object asObject() {
+        if (isObject()) return value;
+        return value; // allow returning primitive-wrapped value too
+    }
+
+    public Object getValue() { return value; }
+    public ResultType getType() { return type; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Result)) return false;
+        Result r = (Result) o;
+        return Objects.equals(this.value, r.value) && this.type == r.type;
+    }
+
     @Override
     public String toString() {
         if (isString()) {
-            return "\"" + value + "\"";
+            return (String) value;
         }
-        return value.toString();
+        return value == null ? "null" : value.toString();
     }
 }
 
@@ -2454,13 +2503,13 @@ class JarlangInterpreter {
      * @throws InterpreterError if evaluation encounters runtime errors
      */
     // Update the interpret method
-    public double interpret(ASTNode ast, Context context) throws InterpreterError {
+    public Result interpret(ASTNode ast, Context context) throws InterpreterError {
         this.context = context;
         return visit(ast);
     }
     
     // Keep existing interpret method for backward compatibility
-    public double interpret(ASTNode ast) throws InterpreterError {
+    public Result interpret(ASTNode ast) throws InterpreterError {
         Context globalContext = new Context("global");
         return interpret(ast, globalContext);
     }
@@ -2476,7 +2525,7 @@ class JarlangInterpreter {
      * @return The numeric result of evaluating the node
      * @throws InterpreterError if evaluation fails
      */
-    public double visit(ASTNode node) throws InterpreterError {
+    public Result visit(ASTNode node) throws InterpreterError {
         return node.evaluate(context);  // Delegate to node's evaluation method
     }
 }
@@ -2596,12 +2645,12 @@ class JarlangRunners {
      * @return Computed numeric result
      * @throws InterpreterError if evaluation fails (e.g., division by zero)
      */
-    public static double runInterpreter(ASTNode ast, Context context) throws InterpreterError {
+    public static Result runInterpreter(ASTNode ast, Context context) throws InterpreterError {
         JarlangInterpreter interpreter = new JarlangInterpreter();
         // Future: Pass context to interpreter for variable/function lookup
         return interpreter.interpret(ast, context);
     }
-    public static double runInterpreter(ASTNode ast) throws InterpreterError {
+    public static Result runInterpreter(ASTNode ast) throws InterpreterError {
         JarlangInterpreter interpreter = new JarlangInterpreter();
         Context context = new Context("<global>"); // Create a global context
         return interpreter.interpret(ast, context);

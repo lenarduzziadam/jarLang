@@ -44,7 +44,7 @@ public class JarlangFileRunner {
             ASTNode ast = parser.parse();
 
             // Interpret the entire AST in the single global context
-            double result = JarlangRunners.runInterpreter(ast, globalContext);
+            Result result = JarlangRunners.runInterpreter(ast, globalContext);
 
             output.append("Result: ").append(result).append("\n");
             output.append("\n🗡️ Execution completed successfully!\n");
@@ -93,8 +93,8 @@ public class JarlangFileRunner {
         }
         
         // For all other expressions, evaluate as number
-        double numResult = JarlangRunners.runInterpreter(ast, context);
-        return new Result(numResult);
+        Result numResult = JarlangRunners.runInterpreter(ast, context);
+        return numResult;
     }
     
     /**

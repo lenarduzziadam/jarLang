@@ -179,3 +179,28 @@ forge safe_lcm(a, b) {
   judge aa == 0 mend 0 orjudge bb == 0 mend 0
   mend (aa * bb) / gcd(aa, bb)
 }
+
+# --- String helpers (vase-level) ---
+
+# Pure-vase helpers (no Java builtin required)
+# Concatenate two values as strings (coerces numbers via + operator)
+forge concat(a, b) {
+  mend a + b
+}
+
+# Repeat a string n times (n numeric). Uses a loop; works in pure vase.
+forge tale_repeat(s, n) {
+  # normalize n to integer by truncating
+  wield i 0
+  wield out ""
+  lest i < n {
+    out = out + s
+    i = i + 1
+  }
+  mend out
+}
+
+# Simple is-empty check
+forge barren_tale(s) {
+  judge s == "" mend 1 orjudge mend 0
+}
