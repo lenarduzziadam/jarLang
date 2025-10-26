@@ -204,3 +204,48 @@ forge tale_repeat(s, n) {
 forge barren_tale(s) {
   judge s == "" mend 1 orjudge mend 0
 }
+
+## Constants and utility functions that demonstrate `vow` usage
+
+# Global constants declared with `vow` (immutable)
+vow KELVIN_OFFSET 273.15
+vow G_SI 9.80665
+vow G_CONST 6.67430e-11
+vow EARTH_MASS 5.972e24
+
+# Potential energy using gravitational acceleration constant
+forge potential_energy(m, h) {
+  # PE = m * g * h
+  mend m * G_SI * h
+}
+
+# Temperature conversions using a constant declared with `vow`
+forge celsius_to_kelvin(c) {
+  mend c + KELVIN_OFFSET
+}
+
+forge kelvin_to_celsius(k) {
+  mend k - KELVIN_OFFSET
+}
+
+# Orbital-related helpers
+# Approximate orbital period (in years) for semi-major axis in astronomical units (AU)
+# Uses the simplified Kepler relation: period ≈ sqrt(a^3) when expressed in AU and years
+forge orbital_period_years(a_AU) {
+  # a_AU^3 then sqrt
+  mend sqrt(a_AU^3)
+}
+
+# More physical: orbital period (seconds) around Earth for radius in meters
+forge orbital_period_seconds(a_meters) {
+  # T = 2*pi*sqrt(a^3 / (G * M))
+  mend 2 * pi * sqrt( (a_meters^3) / (G_CONST * EARTH_MASS) )
+}
+
+# Example of a function that uses a local `vow` inside the function for a tolerance
+forge approx_equal_tol(a, b) {
+  vow EPS 1e-9
+  judge abs(a - b) < EPS mend 1 orjudge mend 0
+}
+
+# End of additional stdlib helpers

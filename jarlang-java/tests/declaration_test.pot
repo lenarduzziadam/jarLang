@@ -1,0 +1,25 @@
+# Declaration / immutability tests for Jarlang
+# Save as tests/declaration_test.pot
+# Expected behavior (manual):
+# - `vow` declares a constant; reassigning should raise InterpreterError
+# - `sacred` declares a sacred variable; reassigning should raise InterpreterError
+# - `wield` declares a normal variable; reassignment should succeed
+
+# 1) vow (constant) - reassignment should fail
+vow x 10
+# The following reassignment SHOULD cause an InterpreterError in a proper runner
+x = 20
+
+# 2) sacred - reassignment should fail
+sacred s "hello"
+# The following reassignment SHOULD cause an InterpreterError in a proper runner
+s = "bye"
+
+# 3) wield (normal) - reassignment should succeed
+wield y 5
+# reassign to a new value
+y = 7
+# print to verify value
+chant y
+
+# End of declaration tests
