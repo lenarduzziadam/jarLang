@@ -1,5 +1,5 @@
-++ # Jarlang — README
-+
+# Jarlang — README
+
 ## What is Jarlang?
 
 Jarlang is a small, warrior-themed expression language and learning interpreter implemented in Java. It’s designed for clarity and experimentation — the syntax uses themed keywords (forge/wield/chant/summon/judge/lest/mend) while providing familiar arithmetic, control flow, functions, and a small standard library.
