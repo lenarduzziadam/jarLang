@@ -1101,16 +1101,16 @@ class AssignmentNode extends ASTNode {
     public Result evaluate(Context context) throws InterpreterError {
         if (value instanceof StringNode) {
             String s = ((StringNode) value).evaluateAsString(context);
-            context.setVariable(varName, s);
+            context.assignVariable(varName, s);
             return new Result(0.0);
         }
         Result res = value.evaluate(context);
         if (res.isNumber()) {
-            context.setVariable(varName, res.asNumber());
+            context.assignVariable(varName, res.asNumber());
         } else if (res.isString()) {
-            context.setVariable(varName, res.asString());
+            context.assignVariable(varName, res.asString());
         } else if (res.isObject()) {
-            context.setVariable(varName, res.asObject());
+            context.assignVariable(varName, res.asObject());
         }
         return new Result(res.isNumber() ? res.asNumber() : 0.0);
     }
@@ -1183,6 +1183,47 @@ class VariableNode extends ASTNode {
     }
 }
 
+class DeclarationNode extends ASTNode {
+    private String name;
+    private ASTNode valueNode; // initializer (may be null)
+    private boolean isVow;
+    private boolean isSacred;
+    private Token token;
+
+    public DeclarationNode(String name, ASTNode valueNode, boolean isVow, boolean isSacred, Token token) {
+        this.name = name;
+        this.valueNode = valueNode;
+        this.isVow = isVow;
+        this.isSacred = isSacred;
+        this.token = token;
+    }
+
+    @Override
+    public Result evaluate(Context context) throws InterpreterError {
+        Result val = null;
+        if (valueNode != null) val = valueNode.evaluate(context);
+
+        Object raw = null;
+        if (val != null) {
+            if (val.isNumber()) raw = val.asNumber();
+            else if (val.isString()) raw = val.asString();
+            else raw = val.asObject();
+        }
+        // declareVariable enforces redeclaration rules
+        context.declareVariable(name, raw, isVow, isSacred);
+        // Return the initializer value (or 0.0) to match other statement returns
+        return val != null ? val : new Result(0.0);
+    }
+
+    @Override
+    public String getNodeType() { return "declaration"; }
+
+    @Override
+    public String toString() {
+        String kw = isSacred ? "sacred" : (isVow ? "vow" : "wield");
+        return "(" + kw + " " + name + " " + (valueNode != null ? valueNode.toString() : "null") + ")";
+    }
+}
 /**
  * AST node for string literals: "hello world"
  */
@@ -1652,77 +1693,121 @@ class Result {
     }
 }
 
+
+// small container for a variable's value and immutability flags
+class VariableEntry {
+    private Object value;
+    private boolean isVow;
+    private boolean isSacred;
+
+    public VariableEntry(Object value, boolean isVow, boolean isSacred) {
+        this.value = value;
+        this.isVow = isVow;
+        this.isSacred = isSacred;
+    }
+
+    public Object getValue() { return value; }
+    public void setValue(Object value) { this.value = value; }
+
+    public boolean isVow() { return isVow; }
+    public boolean isSacred() { return isSacred; }
+}
 //////////////////////////////
 /// CONTEXT MANAGEMENT SYSTEM ///
 /// (Future feature for variables, functions, scopes) ///
 /// (Not yet integrated into parser/interpreter) ///
 /// ////////////////////////////
 class Context {
-    // Existing field
-    private Map<String, Object> variables = new HashMap<>();
-    
-    // NEW FIELDS TO ADD:
+    // store VariableEntry to track immutability flags
+    private Map<String, VariableEntry> variables = new HashMap<>();
+
     private String displayName;           // Human-readable context name
     private Context parentContext;        // Reference to parent scope
     private Position parentEntryPosition; // Where this context was created
 
-    
-    // CONSTRUCTORS TO ADD:
     // Constructor for root context (no parent)
     public Context(String displayName) {
-    // Future context for variables, functions, etc.
-        //private Map<String, Double> variables = new HashMap<>();
         this.displayName = displayName;
         this.parentContext = null;
         this.parentEntryPosition = null;
     }
-    
+
     // Constructor for child context (with parent)
     public Context(String displayName, Context parent, Position entryPosition) {
         this.displayName = displayName;
         this.parentContext = parent;
-        this.parentEntryPosition = entryPosition.copy(); // Defensive copy
+        this.parentEntryPosition = entryPosition == null ? null : entryPosition.copy(); // Defensive copy
     }
-    
-    // GETTER METHODS TO ADD:
+
     public String getDisplayName() { return displayName; }
     public Context getParentContext() { return parentContext; }
     public Position getParentEntryPosition() { return parentEntryPosition; }
-    
-    // UTILITY METHODS TO ADD:
+
     public boolean hasParent() { return parentContext != null; }
     public int getDepth() {
         return hasParent() ? parentContext.getDepth() + 1 : 0;
     }
 
+    // declare variable in current scope; used for 'vow' and 'sacred' (and can be used for wield if desired)
+    public void declareVariable(String name, Object value, boolean isVow, boolean isSacred) throws InterpreterError {
+        if (variables.containsKey(name)) {
+            throw new InterpreterError("Variable '" + name + "' already declared in this scope");
+        }
+        variables.put(name, new VariableEntry(value, isVow, isSacred));
+    }
+
+    // assign to a variable (respects immutability); if not found, creates in this scope (keeps previous implicit-creation behavior)
+    public void assignVariable(String name, Object value) throws InterpreterError {
+        VariableEntry entry = getEntryInScope(name);
+        if (entry == null) {
+            // implicit top-level creation (preserves previous loose semantics)
+            variables.put(name, new VariableEntry(value, false, false));
+            return;
+        }
+        if (entry.isVow()) {
+            throw new InterpreterError("Cannot reassign constant declared with 'vow': '" + name + "'");
+        }
+        if (entry.isSacred()) {
+            throw new InterpreterError("Cannot reassign sacred variable: '" + name + "'");
+        }
+        entry.setValue(value);
+    }
+
+    // helper: search current scope chain for the entry
+    private VariableEntry getEntryInScope(String name) {
+        Context ctx = this;
+        while (ctx != null) {
+            if (ctx.variables.containsKey(name)) return ctx.variables.get(name);
+            ctx = ctx.parentContext;
+        }
+        return null;
+    }
+
+    // Backwards-compatible setters used throughout the codebase (they create non-immutable entries)
     public void setVariable(String name, double value) {
-        variables.put(name, value);
+        variables.put(name, new VariableEntry(value, false, false));
     }
 
     public void setVariable(String name, String value) {
-        variables.put(name, value);
+        variables.put(name, new VariableEntry(value, false, false));
     }
 
     public void setVariable(String name, Object value) {
-        variables.put(name, value);
+        variables.put(name, new VariableEntry(value, false, false));
     }
 
-    // Generic getter
+    // Generic getter returns the raw stored value (or searches parents)
     public Object getVariable(String name) {
-        // Check current context first
         if (variables.containsKey(name)) {
-            return variables.get(name);
+            return variables.get(name).getValue();
         }
-        
-        // If not found and we have a parent, check parent context
         if (hasParent()) {
             return parentContext.getVariable(name);
         }
-        
         return null;
     }
-    
-    // Type-specific getters
+
+    // Type-specific getters (re-use getVariable)
     public Double getVariableAsDouble(String name) {
         Object value = getVariable(name);
         if (value instanceof Double) {
@@ -1733,10 +1818,12 @@ class Context {
             } catch (NumberFormatException e) {
                 return null; // Can't convert string to number
             }
+        } else if (value instanceof Number) {
+            return ((Number) value).doubleValue();
         }
         return null;
     }
-    
+
     public String getVariableAsString(String name) {
         Object value = getVariable(name);
         if (value != null) {
@@ -1744,20 +1831,22 @@ class Context {
         }
         return null;
     }
-    
-    // Type checking methods
+
     public boolean isStringVariable(String name) {
         Object value = getVariable(name);
         return value instanceof String;
     }
-    
+
     public boolean isNumberVariable(String name) {
         Object value = getVariable(name);
-        return value instanceof Double || value instanceof Integer;
+        return value instanceof Double || value instanceof Integer || value instanceof Float || value instanceof Long;
     }
-    
+
     public Map<String, Object> getAllVariables() {
-        Map<String, Object> allVars = new HashMap<>(variables);
+        Map<String, Object> allVars = new HashMap<>();
+        for (Map.Entry<String, VariableEntry> e : variables.entrySet()) {
+            allVars.put(e.getKey(), e.getValue().getValue());
+        }
         if (hasParent()) {
             Map<String, Object> parentVars = parentContext.getAllVariables();
             for (Map.Entry<String, Object> entry : parentVars.entrySet()) {
@@ -1767,9 +1856,25 @@ class Context {
         return allVars;
     }
 
+    /**
+     * Copy this context's variables (including immutability flags) into target context.
+     * Only copies variables that the target does not already contain, preserving the
+     * module-export semantics used by the file runner.
+     */
+    public void copyInto(Context target) {
+        if (target == null) return;
+        for (Map.Entry<String, VariableEntry> e : this.variables.entrySet()) {
+            String name = e.getKey();
+            VariableEntry entry = e.getValue();
+            if (!target.hasVariable(name)) {
+                // Accessing private fields of Context is allowed within the same class
+                target.variables.put(name, new VariableEntry(entry.getValue(), entry.isVow(), entry.isSacred()));
+            }
+        }
+    }
+
     public boolean hasVariable(String name) {
-        return variables.containsKey(name) || 
-            (hasParent() && parentContext.hasVariable(name));
+        return variables.containsKey(name) || (hasParent() && parentContext.hasVariable(name));
     }
 
 }
@@ -2047,6 +2152,30 @@ class JarlangParser {
         // Check for assignment: wield identifier expression
         if (currentToken != null && "wield".equals(currentToken.getType())) {
             return assignment();
+        }
+
+        // NEW: Check for variable declaration (vow or sacred)
+        // Handle 'vow' and 'sacred' declarations
+        if (currentToken != null &&
+            (CONSTANTS.TT_VOW.equals(currentToken.getType()) || CONSTANTS.TT_SACRED.equals(currentToken.getType()))) {
+
+            boolean isVow = CONSTANTS.TT_VOW.equals(currentToken.getType());
+            boolean isSacred = CONSTANTS.TT_SACRED.equals(currentToken.getType());
+            Token kwTok = currentToken;
+            advance(); // consume 'vow' or 'sacred'
+
+            if (currentToken == null || !CONSTANTS.TT_IDENTIFIER.equals(currentToken.getType())) {
+                Position errPos = currentToken != null ? currentToken.getPosStart() : new Position(-1,0,0);
+                throw new SyntaxError("Expected identifier after '" + (isSacred ? "sacred" : "vow") + "'", errPos, filename);
+            }
+            Token nameTok = currentToken;
+            String varName = nameTok.getValue();
+            advance(); // consume identifier
+
+            // Parse initializer expression (mirror 'wield' — require initializer)
+            ASTNode initExpr = expr();
+
+            return new DeclarationNode(varName, initExpr, isVow, isSacred, nameTok);
         }
 
         // NEW: Check for variable reassignment (identifier = expression)

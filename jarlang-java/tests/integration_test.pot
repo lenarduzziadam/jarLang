@@ -1,0 +1,138 @@
+# Comprehensive integration test for Jarlang stdlib and core features
+# This file exercises many stdlib functions and language features.
+# Safe (no intentional runtime failures) so it can be run end-to-end.
+
+# Import stdlib (relative path from tests/ directory)
+summon "../stdlib.vase"
+
+# --- Markers ---
+chant "=== INTEGRATION TEST START ==="
+
+# Numeric basics
+chant "max(10,5) = "
+chant max(10, 5)
+chant "min(10,5) = "
+chant min(10, 5)
+chant "clamp(15,1,10) = "
+chant clamp(15, 1, 10)
+
+# Basic arithmetic wrappers
+chant "commune(2,3) = "
+chant commune(2,3)
+chant "banish(5,2) = "
+chant banish(5,2)
+chant "rally(3,4) = "
+chant rally(3,4)
+chant "slash(10,2) = "
+chant slash(10,2)
+chant "ascend(2,3) = "
+chant ascend(2,3)
+
+# Areas and conversions
+chant "circle_area(2) = "
+chant circle_area(2)
+
+# Factorial, fibonacci, pow_int
+chant "fact(6) = "
+chant fact(6)
+chant "fib(10) = "
+chant fib(10)
+chant "pow_int(2,10) = "
+chant pow_int(2,10)
+
+# Mean and abs
+chant "mean2(4,10) = "
+chant mean2(4,10)
+chant "abs(-7) = "
+chant abs(-7)
+
+# sumTo and gcd/lcm
+chant "sumTo(10) = "
+chant sumTo(10)
+chant "gcd(54,24) = "
+chant gcd(54,24)
+chant "lcm(6,8) = "
+chant lcm(6,8)
+
+# hypot and sqrt
+chant "hypot(3,4) = "
+chant hypot(3,4)
+chant "sqrt(49) = "
+chant sqrt(49)
+
+# mod, sign
+chant "mod(10,3) = "
+chant mod(10,3)
+chant "sign(-5) = "
+chant sign(-5)
+
+# map_range
+chant "map_range(5,0,10,0,100) = "
+chant map_range(5,0,10,0,100)
+
+# parity / primality
+chant "is_even(10) = "
+chant is_even(10)
+chant "is_odd(11) = "
+chant is_odd(11)
+chant "is_prime(97) = "
+chant is_prime(97)
+
+# degree/radian conversions
+chant "deg2rad(180) = "
+chant deg2rad(180)
+chant "rad2deg(pi) = "
+chant rad2deg(pi)
+
+# safe_lcm and abs_int
+chant "safe_lcm(-12, 15) = "
+chant safe_lcm(-12, 15)
+chant "abs_int(-42) = "
+chant abs_int(-42)
+
+# String helpers
+chant "concat('foo','bar') = "
+chant concat("foo","bar")
+chant "tale_repeat('ha',3) = "
+chant tale_repeat("ha", 3)
+chant "barren_tale('') = "
+chant barren_tale("")
+
+# approx equality helpers
+chant "approx_equal(0.10000001, 0.10000002, 1e-7) = "
+chant approx_equal(0.10000001, 0.10000002, 1 * 10 ^ -7)
+chant "approx_equal_tol(0.1+0.2,0.3) = "
+chant approx_equal_tol(0.1 + 0.2, 0.3)
+
+# potential energy and temperature conversions
+chant "potential_energy(70, 1.75) = "
+chant potential_energy(70, 1.75)
+chant "celsius_to_kelvin(20) = "
+chant celsius_to_kelvin(20)
+chant "kelvin_to_celsius(293.15) = "
+chant kelvin_to_celsius(293.15)
+
+# orbital helpers (sanity check values)
+chant "orbital_period_years(1) = "
+chant orbital_period_years(1)
+chant "orbital_period_seconds(7000000) = "
+chant orbital_period_seconds(7000000)
+
+# variable declarations and assignment behavior
+chant "--- variable declaration tests ---"
+# wield (mutable)
+wield test_v 3
+chant test_v
+test_v = 10
+chant test_v
+
+# vow (immutable) in same file should error if uncommented
+vow local_const 42
+chant local_const
+#local_const = 1   # keep commented to avoid runtime error in this integration test
+
+# imported vow should be immutable; the actual failing assignment to demonstrate that
+# behavior is intentionally commented out so the test runs cleanly.
+# KELVIN_OFFSET = 0  # Uncomment to verify immutability enforcement after summon
+
+chant "=== INTEGRATION TEST END ==="
