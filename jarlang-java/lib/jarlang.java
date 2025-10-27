@@ -1856,6 +1856,23 @@ class Context {
         return allVars;
     }
 
+    /**
+     * Copy this context's variables (including immutability flags) into target context.
+     * Only copies variables that the target does not already contain, preserving the
+     * module-export semantics used by the file runner.
+     */
+    public void copyInto(Context target) {
+        if (target == null) return;
+        for (Map.Entry<String, VariableEntry> e : this.variables.entrySet()) {
+            String name = e.getKey();
+            VariableEntry entry = e.getValue();
+            if (!target.hasVariable(name)) {
+                // Accessing private fields of Context is allowed within the same class
+                target.variables.put(name, new VariableEntry(entry.getValue(), entry.isVow(), entry.isSacred()));
+            }
+        }
+    }
+
     public boolean hasVariable(String name) {
         return variables.containsKey(name) || (hasParent() && parentContext.hasVariable(name));
     }

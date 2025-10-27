@@ -210,8 +210,8 @@ forge barren_tale(s) {
 # Global constants declared with `vow` (immutable)
 vow KELVIN_OFFSET 273.15
 vow G_SI 9.80665
-vow G_CONST 6.67430e-11
-vow EARTH_MASS 5.972e24
+vow G_CONST 6.67430 * 10 ^ -11
+vow EARTH_MASS 5.972 * 10 ^ 24
 
 # Potential energy using gravitational acceleration constant
 forge potential_energy(m, h) {
@@ -244,7 +244,7 @@ forge orbital_period_seconds(a_meters) {
 
 # Example of a function that uses a local `vow` inside the function for a tolerance
 forge approx_equal_tol(a, b) {
-  vow EPS 1e-9
+  vow EPS 1 * 10 ^ -9
   judge abs(a - b) < EPS mend 1 orjudge mend 0
 }
 

@@ -126,13 +126,8 @@ public class JarlangFileRunner {
 
     private static void copyModuleToContext(Context moduleCtx, Context targetCtx) {
         if (moduleCtx == null || targetCtx == null) return;
-        Map<String, Object> moduleVars = moduleCtx.getAllVariables();
-        for (Map.Entry<String,Object> e : moduleVars.entrySet()) {
-            // Only add if not already present; change to always overwrite if you prefer
-            if (!targetCtx.hasVariable(e.getKey())) {
-                targetCtx.setVariable(e.getKey(), e.getValue());
-            }
-        }
+        // Use Context.copyInto to preserve immutability flags when exporting module symbols
+        moduleCtx.copyInto(targetCtx);
     }
 
     /**
