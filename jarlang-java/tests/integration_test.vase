@@ -1,7 +1,7 @@
 # stdlib_integration_test.vase
 # Integration tests: stdlib functions + string behavior
 
-summon "../stdlib.vase"
+summon "/Users/adamlenarduzzi/development/network_project/python_projs/jarlang/jarlang-java/stdlib.vase"
 
 chant "== STDLIB INTEGRATION =="
 

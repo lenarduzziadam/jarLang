@@ -1,8 +1,8 @@
 # Test that the testlib helpers work correctly
 # Imports stdlib for functions, and testlib for assertions
 
-summon "../stdlib.vase"
-summon "testlib.vase"
+summon "/Users/adamlenarduzzi/development/network_project/python_projs/jarlang/jarlang-java/stdlib.vase"
+summon "/Users/adamlenarduzzi/development/network_project/python_projs/jarlang/jarlang-java/tests/testlib.vase"
 
 # Reset counters
 test_reset()

@@ -1,0 +1,74 @@
+# Loop tests using testlib.vase for pass/fail verification
+
+summon "testlib.vase"
+
+test_reset()
+
+chant "Test: lest loop increments correctly"
+wield i 0
+lest i < 5 {
+    i = i + 1
+}
+assert_eq(i, 5, "lest increments to 5")
+
+chant "Test: endure loop increments correctly"
+endure wield j 0; j < 5; j = j + 1 {
+    # do nothing, just increment
+}
+assert_eq(j, 5, "endure increments to 5")
+
+chant "Test: nested loops accumulate count"
+wield count 0
+endure wield a 0; a < 3; a = a + 1 {
+    wield b 0
+    lest b < 2 {
+        count = count + 1
+        b = b + 1
+    }
+}
+assert_eq(count, 6, "nested loops count is 6")
+
+chant "Test: lest loop with assert_true"
+wield x 0
+lest x < 1 {
+    x = x + 1
+}
+assert_true(x == 1, "lest loop ran once")
+
+chant "Test: endure loop with assert_false"
+wield y 0
+endure wield k 0; k < 0; k = k + 1 {
+    y = y + 1
+}
+assert_false(y, "endure loop did not run")
+
+## MORE ADVANCED LOOP TESTS
+
+chant "Test: triple-nested loops accumulate value"
+wield total 0
+endure wield i 0; i < 2; i = i + 1 {
+    endure wield j 0; j < 2; j = j + 1 {
+        wield k 0
+        lest k < 2 {
+            total = (total + i + j + k)
+            k = k + 1
+        }
+    }
+}
+assert_eq(total, 12, "triple-nested loops total is 12")
+
+chant "Test: loop with conditional skip (simulated break)"
+wield sum 0
+endure wield n 0; n < 5; n = n + 1 {
+    judge n == 2 {sum = sum + 0} orjudge {sum = sum + n}
+}
+assert_eq(sum, 8, "loop skips n==2")
+
+chant "Test: lest loop with early exit (simulated break)"
+wield z 0
+lest z < 5 {
+    judge z == 3 {z = 5} orjudge {z = z + 1}
+}
+assert_eq(z, 5, "lest loop exits early at z==3")
+
+test_summary()
