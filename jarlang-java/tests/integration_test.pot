@@ -3,7 +3,7 @@
 # Safe (no intentional runtime failures) so it can be run end-to-end.
 
 # Import stdlib (relative path from tests/ directory)
-summon "../stdlib.vase"
+summon "/Users/adamlenarduzzi/development/network_project/python_projs/jarlang/jarlang-java/stdlib.vase"
 
 # --- Markers ---
 chant "=== INTEGRATION TEST START ==="

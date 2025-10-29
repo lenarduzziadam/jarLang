@@ -1613,6 +1613,32 @@ class ReturnNode extends ASTNode {
     public String toString() { return "(mend " + expr.toString() + ")"; }
 }
 
+class EndureNode extends ASTNode {
+    private ASTNode initializer, condition, increment, body;
+    public EndureNode(ASTNode initializer, ASTNode condition, ASTNode increment, ASTNode body) {
+        this.initializer = initializer;
+        this.condition = condition;
+        this.increment = increment;
+        this.body = body;
+    }
+    @Override
+    public Result evaluate(Context context) throws InterpreterError {
+        initializer.evaluate(context);
+        Result lastResult = new Result(0.0);
+        while (condition.evaluate(context).asNumber() != 0.0) {
+            lastResult = body.evaluate(context);
+            increment.evaluate(context);
+        }
+        return lastResult;
+    }
+    @Override
+    public String getNodeType() { return "endure"; }
+
+    @Override
+    public String toString() {
+        return "(endure " + initializer.toString() + " ; " + condition.toString() + " ; " + increment.toString() + " " + body.toString() + ")";
+    }
+}
 
 
 /**
@@ -2104,6 +2130,10 @@ class JarlangParser {
         if (currentToken != null && "mend".equals(currentToken.getType())) {
             return returnStatement();
         }
+
+        if (currentToken != null && "endure".equals(currentToken.getType())) {
+            return endureStatement();
+        }
         // BLOCK: { stmt; stmt; ... }
         if (currentToken != null && CONSTANTS.TT_LBRACE.equals(currentToken.getType())) {
             advance(); // consume '{'
@@ -2270,6 +2300,41 @@ class JarlangParser {
         advance(); // consume string
 
         return new ImportNode(path);
+    }
+
+    private ASTNode endureStatement() throws SyntaxError {
+        // consume 'endure'
+        advance();
+
+        // Parse initializer
+        ASTNode initializer = statement();
+
+        // Expect semicolon separator
+        if (currentToken == null || !CONSTANTS.TT_SEMI.equals(currentToken.getType())) {
+            Position errPos = currentToken != null ? currentToken.getPosStart() : new Position(-1, 0, 0);
+            throw new SyntaxError("Expected ';' after for-loop initializer", errPos, filename);
+        }
+
+        advance(); // consume ';'
+
+        // Parse condition
+        ASTNode condition = expr();
+
+        // Expect semicolon separator
+        if (currentToken == null || !CONSTANTS.TT_SEMI.equals(currentToken.getType())) {
+            Position errPos = currentToken != null ? currentToken.getPosStart() : new Position(-1, 0, 0);
+            throw new SyntaxError("Expected ';' after for-loop condition", errPos, filename);
+        }
+
+        advance(); // consume ';'
+
+        // Parse increment
+        ASTNode increment = statement();
+
+        // Parse body
+        ASTNode body = statement();
+
+        return new EndureNode(initializer, condition, increment, body);
     }
 
     // Add assignment parsing method:

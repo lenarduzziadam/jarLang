@@ -1,7 +1,7 @@
 # Tests for stdlib additions that use `vow`
 # Import the stdlib and exercise the new functions and constants
 
-summon "../stdlib.vase"
+summon "/Users/adamlenarduzzi/development/network_project/python_projs/jarlang/jarlang-java/stdlib.vase"
 
 # potential energy for 70kg at 1.75m -> ~1201.314625
 chant potential_energy(70, 1.75)
