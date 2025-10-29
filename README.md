@@ -9,9 +9,6 @@ This README documents the language syntax, runtime semantics, developer extensio
 ---
 
 ## Quick start
-
-- Run a single file with the project runner:
-  - `./run.sh path/to/script.vase`
 - Start the REPL (if provided by your runner), or call `!run filename.vase` inside the REPL.
 - Standard library functions are located in `stdlib.vase` and are imported with `summon "stdlib.vase"`.
 
