@@ -283,11 +283,3 @@ summon "stdlib.vase"
 chant commune(3, 4)  # 7.0
 ```
 
----
-
-If you'd like, I can also:
-- add this `README.md` file to the repo (I already placed it here),
-- generate a one-page cheat sheet for the most-used syntax and stdlib functions, or
-- create a `GETTING_STARTED.md` with exact macOS/zsh commands for building and running.
-
-Choose one of those next steps or tell me any tweaks you want (tone, formatting, more examples, etc.).
