@@ -261,9 +261,9 @@ chant commune(7,7)
 The JarKnight mascot was created to represent the spirit of Jarlang: playful, bold, and ready for battle! Below is the visual journey from sketch to final mascot, showing each stage of the design process:
 
 <div align="center">
+  <img src="images/mascot_progress/jarknight_rough.png" alt="Rough" width="120"/>
   <img src="images/mascot_progress/jarknight_sketch_simple.png" alt="Sketch Simple" width="120"/>
   <img src="images/mascot_progress/jarknight_sketch_rough.png" alt="Sketch Rough" width="120"/>
-  <img src="images/mascot_progress/jarknight_rough.png" alt="Rough" width="120"/>
   <img src="images/mascot_progress/jarknight_defined_lines.png" alt="Defined Lines" width="120"/>
   <img src="images/mascot_progress/jarknight_solid_colors.png" alt="Solid Colors" width="120"/>
   <img src="images/mascot_progress/jarknight_more_details.png" alt="More Details" width="120"/>
