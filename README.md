@@ -1,5 +1,9 @@
 # Jarlang — README
 
+<p align="center">
+  <img src="images/mascot_progress/jarknight_final_glaze.png" alt="JarKnight Mascot" width="300"/>
+</p>
+
 ## What is Jarlang?
 
 Jarlang is a small, warrior-themed expression language and learning interpreter implemented in Java. It’s designed for clarity and experimentation — the syntax uses themed keywords (forge/wield/chant/summon/judge/lest/mend) while providing familiar arithmetic, control flow, functions, and a small standard library.
@@ -249,6 +253,25 @@ chant commune(7,7)
 ---
 
 ## Examples
+
+---
+
+## Mascot Progress: The Making of JarKnight
+
+The JarKnight mascot was created to represent the spirit of Jarlang: playful, bold, and ready for battle! Below is the visual journey from sketch to final mascot, showing each stage of the design process:
+
+<div align="center">
+  <img src="images/mascot_progress/jarknight_sketch_simple.png" alt="Sketch Simple" width="120"/>
+  <img src="images/mascot_progress/jarknight_sketch_rough.png" alt="Sketch Rough" width="120"/>
+  <img src="images/mascot_progress/jarknight_rough.png" alt="Rough" width="120"/>
+  <img src="images/mascot_progress/jarknight_defined_lines.png" alt="Defined Lines" width="120"/>
+  <img src="images/mascot_progress/jarknight_solid_colors.png" alt="Solid Colors" width="120"/>
+  <img src="images/mascot_progress/jarknight_more_details.png" alt="More Details" width="120"/>
+  <img src="images/mascot_progress/jarknight_greater_finetuning.png" alt="Greater Finetuning" width="120"/>
+  <img src="images/mascot_progress/jarknight_final_glaze.png" alt="Final Glaze" width="120"/>
+</div>
+
+Each image above shows a step in the mascot's evolution, from initial concept to the polished JarKnight you see at the top of this README!
 
 Function definition and call:
 
