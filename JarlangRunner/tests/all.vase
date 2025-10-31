@@ -1,0 +1,5 @@
+summon "function_test.vase"
+summon "integration_test.vase"
+summon "integration_test.pot"
+summon "loop_tests.vase"
+summon "testlib_usage.pot"

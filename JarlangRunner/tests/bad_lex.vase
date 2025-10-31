@@ -1,0 +1,4 @@
+summon "stdlib.vase"
+
+# Intentional lexical error: illegal character '&'
+chant 3 & 4

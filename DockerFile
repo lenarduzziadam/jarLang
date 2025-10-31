@@ -1,0 +1,8 @@
+FROM openjdk:17-jdk-slim
+WORKDIR /jarlang
+COPY JarlangRunner/jarlang.jar /jarlang/JarlangRunner/jarlang.jar
+COPY JarlangRunner/stdlib.vase /jarlang/JarlangRunner/stdlib.vase
+COPY JarlangRunner/tests /jarlang/JarlangRunner/tests
+# Add any other files needed for your shell
+
+CMD ["java", "-jar", "/JarlangRunner/jarlang.jar"]

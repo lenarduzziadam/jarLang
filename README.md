@@ -3,6 +3,93 @@
 <p align="center">
   <img src="images/mascot_progress/jarknight_final_glaze.png" alt="JarKnight Mascot" width="300"/>
 </p>
+---
+
+## How to Guide: Getting Started with Jarlang
+
+
+### 1. Running Jarlang
+
+#### Option 1: Using the JAR file
+
+- Download or build `jarlang.jar` (found in the `JarlangRunner` directory).
+- Start the Jarlang shell (REPL):
+  ```sh
+  java -jar JarlangRunner/jarlang.jar
+  ```
+- Inside the shell, run a `.vase` file with:
+  ```
+  !run yourfile.vase
+  ```
+
+#### Option 2: Run via python/docker script in root (Need implementation)
+
+- Add executable permissions to run_jarlang.py (remember to always look deeply at scripts before giving permissions or running)
+### 2. Language Concepts Tutorial
+
+#### Variables
+- Declare with `wield`:
+  ```vase
+  wield x 10
+  wield name "JarKnight"
+  ```
+
+#### Types: Ints, Doubles, Strings
+- Numbers can be integers or floats:
+  ```vase
+  wield a 42      # int
+  wield b 3.14    # double
+  wield s "hello" # string
+  ```
+
+#### Conditionals
+- Use `judge` and `orjudge` for if/elif/else:
+  ```vase
+  wield n 5
+  judge n > 0 mend chant "positive"
+  orjudge n == 0 mend chant "zero"
+  orjudge mend chant "negative"
+  ```
+
+#### Functions & Function Defining
+- Define with `forge`, return with `mend`:
+  ```vase
+  forge add(a, b)
+    mend a + b
+  chant add(2, 3)  # prints 5
+  ```
+
+#### Loops
+- While loop: `lest`
+  ```vase
+  wield i 0
+  lest i < 3 {
+    chant i
+    i = i + 1
+  }
+  ```
+- For loop: `endure`
+  ```vase
+  endure wield j 0; j < 3; j = j + 1 {
+    chant j
+  }
+  ```
+
+#### Strings & Operations
+- Concatenate with `+`:
+  ```vase
+  wield greeting "Hello, " + name
+  chant greeting
+  ```
+
+#### Importing & Using the Standard Library
+- Import helpers:
+  ```vase
+  summon "stdlib.vase"
+  chant commune(3, 4)  # prints 7.0
+  ```
+
+---
 
 ## What is Jarlang?
 
