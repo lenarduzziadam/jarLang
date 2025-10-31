@@ -234,6 +234,17 @@ chant commune(7,7)
 
 ## Development notes & extension points
 
+---
+
+## Recent Additions
+
+- **Test Suite Library:**
+  - Added `testlib.vase`, a pure-vase test helper library with assertion functions (`assert_eq`, `assert_true`, etc.), pass/fail counters, and summary reporting. This makes it easy to write automated tests for language features and standard library functions.
+- **Vow/Sacred Types:**
+  - The language now supports `vow` and `sacred` variable declarations, enforcing immutability and special semantics for constants and protected variables. Reassignment to these types is prevented at runtime.
+- **Endure Loops:**
+  - Added the `endure` keyword for for-loop style iteration, supporting initializer, condition, increment, and loop body. This complements the existing `lest` (while) loop and enables more expressive control flow.
+
 - Code lives under `lib/`:
   - `jarlang.java` — lexer, parser, AST nodes, interpreter core.
   - `JarlangCollections.java` — example builtins and helper types (arrays).
@@ -253,25 +264,6 @@ chant commune(7,7)
 ---
 
 ## Examples
-
----
-
-## Mascot Progress: The Making of JarKnight
-
-The JarKnight mascot was created to represent the spirit of Jarlang: playful, bold, and ready for battle! Below is the visual journey from sketch to final mascot, showing each stage of the design process:
-
-<div align="center">
-  <img src="images/mascot_progress/jarknight_rough.png" alt="Rough" width="120"/>
-  <img src="images/mascot_progress/jarknight_sketch_simple.png" alt="Sketch Simple" width="120"/>
-  <img src="images/mascot_progress/jarknight_sketch_rough.png" alt="Sketch Rough" width="120"/>
-  <img src="images/mascot_progress/jarknight_defined_lines.png" alt="Defined Lines" width="120"/>
-  <img src="images/mascot_progress/jarknight_solid_colors.png" alt="Solid Colors" width="120"/>
-  <img src="images/mascot_progress/jarknight_more_details.png" alt="More Details" width="120"/>
-  <img src="images/mascot_progress/jarknight_greater_finetuning.png" alt="Greater Finetuning" width="120"/>
-  <img src="images/mascot_progress/jarknight_final_glaze.png" alt="Final Glaze" width="120"/>
-</div>
-
-Each image above shows a step in the mascot's evolution, from initial concept to the polished JarKnight you see at the top of this README!
 
 Function definition and call:
 
@@ -303,3 +295,24 @@ summon "stdlib.vase"
 chant commune(3, 4)  # 7.0
 ```
 
+---
+
+## Mascot Progress: The Making of JarKnight
+
+The JarKnight mascot was created to represent the spirit of Jarlang: playful, bold, and ready for battle! Below is the visual journey from sketch to final mascot, showing each stage of the design process:
+
+<div align="center">
+  <img src="images/mascot_progress/jarknight_rough.png" alt="Rough" width="120"/>
+  <img src="images/mascot_progress/jarknight_sketch_simple.png" alt="Sketch Simple" width="120"/>
+  <img src="images/mascot_progress/jarknight_sketch_rough.png" alt="Sketch Rough" width="120"/>
+  <img src="images/mascot_progress/jarknight_defined_lines.png" alt="Defined Lines" width="120"/>
+  <img src="images/mascot_progress/jarknight_solid_colors.png" alt="Solid Colors" width="120"/>
+  <img src="images/mascot_progress/jarknight_more_details.png" alt="More Details" width="120"/>
+  <img src="images/mascot_progress/jarknight_greater_finetuning.png" alt="Greater Finetuning" width="120"/>
+  <img src="images/mascot_progress/jarknight_final_glaze.png" alt="Final Glaze" width="120"/>
+</div>
+
+Each image above shows a step in the mascot's evolution, from initial concept to the polished JarKnight you see at the top of this README!
+
+---
+Copyright © Adam Lenarduzzi 2025 — Jarlang

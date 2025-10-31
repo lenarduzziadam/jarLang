@@ -8,7 +8,7 @@ public class Main {
     public static void main(String[] args) {
         System.out.println("=== Jarlang Programming Language ===");
         System.out.println("An Interpreter for seasoned jars!!!\nHUZZAHHH! EN GARDE!!!");
-        System.out.println("Version: 0.6.8-beta");
+        System.out.println("Version: 0.7.5-beta\nCopyright © Adam Lenarduzzi 2025");
         System.out.println();
         
         // Create and run the shell
