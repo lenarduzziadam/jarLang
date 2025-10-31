@@ -1,0 +1,35 @@
+# Test for Jarlang loop types: lest (while) and endure (for), including nested loops
+
+chant "Test: lest loop (while)"
+wield i 0
+lest i < 3{
+    chant i
+    i = i + 1
+}
+
+chant "Test: endure loop (for)"
+endure wield j 0; j < 3; j = j + 1{
+    chant j
+}
+
+chant "Test: nested lest inside endure"
+endure wield k 0; k < 2; k = k + 1 {
+    wield m 0
+    lest m < 2 {
+        chant k
+        chant m
+        m = m + 1
+    }
+}
+
+chant "Test: nested endure inside lest"
+wield x 0
+lest x < 2{
+    endure wield y 0; y < 2; y = y + 1{
+        chant x
+        chant y
+    }
+    x = x + 1
+}
+
+chant "Test: completed loop tests"

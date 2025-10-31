@@ -7,14 +7,17 @@
 
 ## How to Guide: Getting Started with Jarlang
 
+
 ### 1. Running Jarlang
 
-- To run a `.vase` file, use the provided runner script:
-  Start your REPL
+#### Option 1: Using the JAR file
+
+- Download or build `jarlang.jar` (found in the `JarlangRunner` directory).
+- Start the Jarlang shell (REPL):
+  ```sh
+  java -jar JarlangRunner/jarlang.jar
   ```
-  ./run.sh 
-  ```
-- then use !run command:
+- Inside the shell, run a `.vase` file with:
   ```
   !run yourfile.vase
   ```

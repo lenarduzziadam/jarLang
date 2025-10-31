@@ -1,0 +1,4 @@
+summon "stdlib.vase"
+
+# Intentional syntax error: missing closing parenthesis
+chant (3 + 4

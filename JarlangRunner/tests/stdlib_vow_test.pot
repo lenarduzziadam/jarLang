@@ -1,0 +1,29 @@
+# Tests for stdlib additions that use `vow`
+# Import the stdlib and exercise the new functions and constants
+
+summon "/Users/adamlenarduzzi/development/network_project/python_projs/jarlang/jarlang-java/stdlib.vase"
+
+# potential energy for 70kg at 1.75m -> ~1201.314625
+chant potential_energy(70, 1.75)
+
+# temperature conversions
+chant celsius_to_kelvin(20)
+chant kelvin_to_celsius(293.15)
+
+# approx-equality (0.1 + 0.2) vs 0.3
+chant approx_equal_tol(0.1 + 0.2, 0.3)
+
+# orbital helpers
+chant orbital_period_years(1)          # expect ~1
+chant orbital_period_seconds(7000000)  # low-earth orbit-ish radius (seconds)
+
+# Demonstrate that global `vow` constants cannot be reassigned (should raise InterpreterError)
+# Uncomment to observe failure behavior in a runner that surfaces interpreter exceptions, for '=' (bind) or redeclare of vow
+# KELVIN_OFFSET = 0
+# vow G_CONST 1.0009
+
+
+# Local `vow` inside a function is also immutable; demonstrate via approx_equal_tol which uses `vow EPS`
+chant approx_equal_tol(1.000000001, 1.000000002)
+
+# End of stdlib vow tests

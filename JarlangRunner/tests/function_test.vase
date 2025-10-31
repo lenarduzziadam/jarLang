@@ -1,0 +1,67 @@
+# function_test.vase
+# Comprehensive smoke tests for arithmetic, strings, variables, and functions.
+# Expected output (human-readable):
+# == NUMERIC ==
+# 14.0
+# -5.0
+# 15.0
+# 12.0
+# 5.0
+# 8.0
+# == STRINGS ==
+# "Hi"
+# "Hi there"
+# "Hello, Adam"
+# "Hi from fn"
+# == MIXED/COMPOSED ==
+# 20.0
+
+# Numeric arithmetic
+chant "== NUMERIC =="
+chant 7.0 + 7.0          # 14.0
+chant -5                 # -5.0
+
+# Variables: declaration and reassignment
+wield x 10               # declare x = 10
+chant x + 5              # 15.0
+x = x + 2                # reassignment using '='
+chant x                  # 12.0
+
+# Functions, returns, and nested calls
+forge add(a, b)
+    mend a + b
+
+chant add(2, 3)          # 5.0
+
+forge twice(n)
+    mend add(n, n)
+
+chant twice(4)           # 8.0
+
+# Strings and concatenation (plus should concatenate if either operand is string)
+chant "== STRINGS =="
+chant "Hi"               # "Hi"
+
+wield s "Hi"             # string var
+chant s                  # "Hi"
+
+wield s s + " there"     # s = s + " there"
+chant s                  # "Hi there"
+
+# Function that returns a string
+forge greet(name)
+    mend "Hello, " + name
+
+chant greet("Adam")      # "Hello, Adam"
+
+# No-arg function
+forge sayHi()
+    mend "Hi from fn"
+
+chant sayHi()            # "Hi from fn"
+
+# Mixed numeric/string composition
+chant "== MIXED/COMPOSED =="
+wield a 8
+wield b 12
+chant add(a, b) + 0.0    # forces numeric addition then prints; expected 20.0

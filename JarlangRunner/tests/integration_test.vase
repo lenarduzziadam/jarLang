@@ -1,0 +1,68 @@
+# stdlib_integration_test.vase
+# Integration tests: stdlib functions + string behavior
+
+summon "/Users/adamlenarduzzi/development/network_project/python_projs/jarlang/jarlang-java/stdlib.vase"
+
+chant "== STDLIB INTEGRATION =="
+
+# Basic arithmetic wrappers from stdlib
+chant "commune(7,7) -> " + commune(7, 7)            # expected: 14.0
+chant "banish(10,3) -> " + banish(10, 3)            # expected: 7.0
+chant "rally(3,5) -> " + rally(3, 5)                # expected: 15.0
+chant "slash(24,2) -> " + slash(24, 2)              # expected: 12.0
+chant "ascend(2,3) -> " + ascend(2, 3)              # expected: 8.0
+
+# Some math helpers
+chant "circle_area(2) -> " + circle_area(2)         # expected: pi * 4
+chant "pow_int(2,10) -> " + pow_int(2, 10)          # expected: 1024.0
+chant "fact(6) -> " + fact(6)                       # expected: 720.0
+chant "fib(10) -> " + fib(10)                       # expected: 55.0
+
+# GCD / LCM
+chant "gcd(21,14) -> " + gcd(21, 14)                # expected: 7.0
+chant "lcm(6,8) -> " + lcm(6, 8)                    # expected: 24.0 (if lcm uses gcd)
+
+# Primality
+chant "is_prime(13) -> " + is_prime(13)             # expected: 1.0
+chant "is_prime(12) -> " + is_prime(12)             # expected: 0.0
+
+# Range mapping and hypot
+chant "map_range(5,0,10,0,100) -> " + map_range(5,0,10,0,100)   # expected: 50.0
+chant "hypot(3,4) -> " + hypot(3,4)               # expected: 5.0
+
+# Clamp/sign/sqrt
+chant "clamp(12, 0, 10) -> " + clamp(12,0,10)     # expected: 10.0
+chant "sign(-7) -> " + sign(-7)                   # expected: -1.0
+chant "sqrt(9) -> " + sqrt(9)                     # expected: 3.0
+
+# Mixed numeric composition to verify types
+wield a 8
+wield b 12
+chant "add(a,b) -> " + add1(add1(a) + b - 1)       # exercise add1 and arithmetic
+
+# === String tests ===
+chant "== STRING TESTS =="
+wield greeting "Hello"
+wield name "Alice"
+
+# string concatenation: variable + literal
+wield msg greeting + ", " + name
+chant "msg -> " + msg                               # expected: Hello, Alice
+
+# string concatenation with function that returns numeric (should coerce correctly)
+# we make a small local function that returns a string
+forge shout(s)
+    mend s + "!"
+
+chant "shout('Hi') -> " + shout("Hi")               # expected: Hi!
+
+# concatenation mixing numeric (coercion) - ensure both branches handled
+wield combined "Count: " + add1(4)
+chant "combined -> " + combined                     # expected: Count: 5.0
+
+# edge-case: concat empty string and number
+wield empty ""
+wield comb2 empty + 42
+chant "comb2 -> " + comb2                           # expected: 42.0  (or string "42" depending on coercion)
+
+chant "== END OF TESTS =="
