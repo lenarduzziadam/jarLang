@@ -25,6 +25,9 @@
 #### Option 2: Run via python/docker script in root (Need implementation)
 
 - Add executable permissions to run_jarlang.py (remember to always look deeply at scripts before giving permissions or running)
+
+-TODO: MODE TO BE ADDED HERE WHEN DOCKER is working
+
 ### 2. Language Concepts Tutorial
 
 #### Variables
