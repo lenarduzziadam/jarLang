@@ -5,4 +5,4 @@ COPY JarlangRunner/stdlib.vase /jarlang/JarlangRunner/stdlib.vase
 COPY JarlangRunner/tests /jarlang/JarlangRunner/tests
 # Add any other files needed for your shell
 
-CMD ["java", "-jar", "/JarlangRunner/jarlang.jar"]
+CMD ["java", "-jar", "/jarlang/JarlangRunner/jarlang.jar"]

@@ -1,0 +1,58 @@
+# Simple test library for Jarlang (pure-vase)
+# Provides basic assert helpers and counters for test suites.
+
+# Counters (mutable so test suites can increment)
+wield TEST_PASSES 0
+wield TEST_FAILS 0
+
+# Internal helpers
+forge report_pass(label) {
+  TEST_PASSES = TEST_PASSES + 1
+  chant "PASS: " + label
+  mend 1
+}
+
+forge report_fail(label, expected, actual) {
+  TEST_FAILS = TEST_FAILS + 1
+  chant "FAIL: " + label + " expected: " + expected + " got: " + actual
+  mend 0
+}
+
+# Public assertions
+# assert_eq(expected, actual, label)
+forge assert_eq(expected, actual, label) {
+  # numeric or string equality via '==' operator
+  judge expected == actual mend report_pass(label) orjudge mend report_fail(label, expected, actual)
+}
+
+# assert_ne(expected, actual, label)
+forge assert_ne(expected, actual, label) {
+  judge expected != actual mend report_pass(label) orjudge mend report_fail(label, expected, actual)
+}
+
+# assert_true(value, label) -- value considered true when numeric 1.0 or non-empty
+forge assert_true(value, label) {
+  # treat numeric 1 as true
+  judge value == 1 mend report_pass(label) orjudge 
+    # fallback: non-empty string considered true
+    judge value != "" mend report_pass(label) orjudge mend report_fail(label, 1, value)
+}
+
+# assert_false(value, label) -- true if numeric 0 or empty string
+forge assert_false(value, label) {
+  judge value == 0 mend report_pass(label) orjudge 
+    judge value == "" mend report_pass(label) orjudge mend report_fail(label, 0, value)
+}
+
+# Simple summary printer
+forge test_summary() {
+  chant "TEST SUMMARY: passes=" + TEST_PASSES + " fails=" + TEST_FAILS
+  mend TEST_FAILS
+}
+
+# reset counters (useful between test groups)
+forge test_reset() {
+  TEST_PASSES = 0
+  TEST_FAILS = 0
+  mend 0
+}

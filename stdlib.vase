@@ -1,0 +1,251 @@
+# small stdlib with helpers
+
+## MIN MAX RELEVANT FUNCTIONS
+forge max (a, b) {
+  judge a > b mend a orjudge b > a mend b
+}
+
+forge min (a, b) {
+  judge a < b mend a orjudge mend b
+}
+
+forge clamp (x, lo, hi) {
+  judge x < lo mend lo orjudge x > hi mend hi orjudge mend x
+}
+
+##SIMPLE NUEMRIC
+
+forge commune (a, b) {
+  mend a + b
+}
+
+forge banish (a, b) {
+  mend a - b
+}
+
+forge rally (a, b) {
+  mend a * b
+}
+
+forge slash (a, b){
+  mend a / b
+}
+
+forge ascend (a, b){
+  mend a ^ b
+}
+
+forge circle_area (r){
+  mend pi * r^2
+}
+
+forge add1(x) {
+  mend x + 1
+}
+
+
+#MORE ADVANCED NUMERICS
+
+forge fact(n) {
+  judge n < 2 mend 1 orjudge mend n * fact(n - 1)
+}
+
+forge fib(n) {
+  judge n < 2 mend n
+  wield a 0
+  wield b 1
+  wield i 1
+  lest i < n {
+    wield temp a + b
+    a = b
+    b = temp
+    i = i + 1
+  }
+  mend b
+}
+
+forge mean2(a, b) {
+  mend (a + b) / 2
+}
+
+forge abs(x) {
+  judge x < 0 mend -x orjudge mend x
+}
+
+forge sumTo(n) {
+  mend (n * (n + 1)) / 2
+}
+
+forge approx_equal(a, b, eps) {
+  judge abs(a - b) < eps mend 1 orjudge mend 0
+}
+
+forge gcd(a, b) {
+  judge a == 0 mend b orjudge b == 0 mend a
+  lest a != b {
+    judge a > b { a = a - b } orjudge { b = b - a }
+  }
+  mend a
+}
+
+# TODO: LCM runs into infinite loop issues with some entries
+forge lcm(a, b) {
+  mend (a * b) / gcd(a, b)
+}
+
+forge hypot(a, b) {
+  mend (a^2 + b^2) ^ (1/2)
+}
+
+forge pow_int(a, n) {
+  judge n == 0 mend 1
+  judge n == 1 mend a
+  wield res 1
+  wield i 0
+  lest i < n {
+    res = res * a
+    i = i + 1
+  }
+  mend res
+}
+
+forge invert_sign(n) {
+  mend n * -1
+}
+
+forge mod(a, b) {
+  # handle division-by-zero defensively
+  judge b == 0 mend 0
+  # make positive for a simple remainder
+  wield aa a
+  lest aa >= b {
+    aa = aa - b
+  }
+  mend aa
+}
+
+forge sign(x) {
+  judge x < 0 mend -1 orjudge x == 0 mend 0 orjudge mend 1
+}
+
+forge sqrt(x) {
+  mend x ^ (1/2)
+}
+
+forge map_range(x, inMin, inMax, outMin, outMax) {
+  mend outMin + ( (x - inMin) * (outMax - outMin) ) / (inMax - inMin)
+}
+
+forge is_even(n) {
+  # using repeated subtraction of 2
+  wield x n
+  lest x >= 2 {
+    x = x - 2
+  }
+  judge x == 0 mend 1 orjudge mend 0
+}
+
+forge is_odd(n) {
+  mend 1 - is_even(n)
+}
+
+forge is_prime(n) {
+  judge n < 2 mend 0
+  judge n == 2 mend 1
+  judge mod(n,2) == 0 mend 0
+  wield i 3
+  lest (i * i) <= n {
+    judge mod(n, i) == 0 mend 0
+    i = i + 2
+  }
+  mend 1
+}
+
+forge deg2rad(d) {
+  mend d * (pi / 180)
+}
+
+forge rad2deg(r) {
+  mend r * (180 / pi)
+}
+
+forge abs_int(x) {
+  judge x < 0 mend -x orjudge mend x
+}
+
+forge safe_lcm(a, b) {
+  wield aa abs_int(a)
+  wield bb abs_int(b)
+  judge aa == 0 mend 0 orjudge bb == 0 mend 0
+  mend (aa * bb) / gcd(aa, bb)
+}
+
+# --- String helpers (vase-level) ---
+
+# Pure-vase helpers (no Java builtin required)
+# Concatenate two values as strings (coerces numbers via + operator)
+forge concat(a, b) {
+  mend a + b
+}
+
+# Repeat a string n times (n numeric). Uses a loop; works in pure vase.
+forge tale_repeat(s, n) {
+  # normalize n to integer by truncating
+  wield i 0
+  wield out ""
+  lest i < n {
+    out = out + s
+    i = i + 1
+  }
+  mend out
+}
+
+# Simple is-empty check
+forge barren_tale(s) {
+  judge s == "" mend 1 orjudge mend 0
+}
+
+## Constants and utility functions that demonstrate `vow` usage
+
+# Global constants declared with `vow` (immutable)
+vow KELVIN_OFFSET 273.15
+vow G_SI 9.80665
+vow G_CONST 6.67430 * 10 ^ -11
+vow EARTH_MASS 5.972 * 10 ^ 24
+
+# Potential energy using gravitational acceleration constant
+forge potential_energy(m, h) {
+  # PE = m * g * h
+  mend m * G_SI * h
+}
+
+# Temperature conversions using a constant declared with `vow`
+forge celsius_to_kelvin(c) {
+  mend c + KELVIN_OFFSET
+}
+
+forge kelvin_to_celsius(k) {
+  mend k - KELVIN_OFFSET
+}
+
+# Orbital-related helpers
+# Approximate orbital period (in years) for semi-major axis in astronomical units (AU)
+# Uses the simplified Kepler relation: period ≈ sqrt(a^3) when expressed in AU and years
+forge orbital_period_years(a_AU) {
+  # a_AU^3 then sqrt
+  mend sqrt(a_AU^3)
+}
+
+# More physical: orbital period (seconds) around Earth for radius in meters
+forge orbital_period_seconds(a_meters) {
+  # T = 2*pi*sqrt(a^3 / (G * M))
+  mend 2 * pi * sqrt( (a_meters^3) / (G_CONST * EARTH_MASS) )
+}
+
+# Example of a function that uses a local `vow` inside the function for a tolerance
+forge approx_equal_tol(a, b) {
+  vow EPS 1 * 10 ^ -9
+  judge abs(a - b) < EPS mend 1 orjudge mend 0
+}
+
+# End of additional stdlib helpers
