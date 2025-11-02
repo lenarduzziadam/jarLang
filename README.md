@@ -1,6 +1,11 @@
 # Jarlang — README
 
 <p align="center">
+  <b>Download the Jarlang Executable Runner:</b><br>
+  <a href="https://drive.google.com/drive/folders/10LGzvXdpaqdqb5U4uXlYkFmuhvwXI82C?usp=sharing" target="_blank">Jarlang Executable Runner (Google Drive)</a>
+</p>
+
+<p align="center">
   <img src="images/mascot_progress/jarknight_final_glaze.png" alt="JarKnight Mascot" width="300"/>
 </p>
 ---
@@ -405,4 +410,11 @@ The JarKnight mascot was created to represent the spirit of Jarlang: playful, bo
 Each image above shows a step in the mascot's evolution, from initial concept to the polished JarKnight you see at the top of this README!
 
 ---
+<br>
+<hr>
+<p align="center">
+  <b>Download the Jarlang Executable Runner:</b><br>
+  <a href="https://drive.google.com/drive/folders/10LGzvXdpaqdqb5U4uXlYkFmuhvwXI82C?usp=sharing" target="_blank">Jarlang Executable Runner (Google Drive)</a>
+</p>
+
 Copyright © Adam Lenarduzzi 2025 — Jarlang
