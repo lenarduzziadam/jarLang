@@ -1,0 +1,76 @@
+# Import library in this case the standard library
+summon "stdlib.vase"
+
+
+#
+## Typical Placeholder File at the start of most coding languages
+#
+chant "Hello World it is I JarKnight"
+chant ""
+
+#
+## Defining numbers in multiple ways for become_cool custom function set up
+#
+wield life_num 42   # Can define mutable values with 'wield'
+vow cool 9000       # Static values are defined with 'vow' or 'sacred' keywords
+magic_num = 3       # '=' defines values the same as 'wield'
+
+
+# strings can be defined the same way as numbers
+cooler_now = "You are finally a cool DUDE!!! with the help of magic and life"
+
+# chant is this Jarlangs version of print()
+chant "My three favorite numbers are as follows:"
+
+#currently the newLine character is unsupported so new lines can be done via empty string chant statements
+chant ""
+chant "LIFE:"
+chant life_num
+chant ""
+chant "MAGIC:"
+chant magic_num
+chant ""
+chant "AND COOL!!!!"
+chant cool
+chant ""
+
+# setup for temp_num value 
+wield temp_num 0
+chant "Coolness level is:"
+chant temp_num
+
+#judge and orjudge is jarlangs vesion of If and Else if statments orjudge currently functions as else if and if
+judge temp_num < cool chant "You are currently not cool, I can help" orjudge chant cooler_now
+
+#
+## Functions can be defined with the 'forge' keyword and must return a value with 'mend'
+## Parameneters are inferred based on what is placed within the paranthessis after the function name
+## This function incorporates chant statments, and a while loop then performs a small calculation with an judge/ordjudge statments
+#
+forge become_cool(temp , magic, coolio, life){
+    chant "Coolness being upgraded"
+
+    # Jarlangs while loop implementation
+    lest temp < coolio{
+        judge temp < cool {temp = temp + (life * magic_num)} orjudge {temp = temp - pi * magic_num^2}
+    }
+
+    # Jarlangs return type 'mend' 
+    mend temp
+}
+
+# just like traditional languages you can define a variable with a function call
+new_num = become_cool(temp_num, magic_num, cool, life_num)
+chant new_num 
+
+judge new_num < cool chant "You are currently not cool, I can help" orjudge chant cooler_now
+
+chant ""
+chant "Your coolness level is now!!!"
+
+## PI is a special var key within jarlang 
+chant new_num / (life_num * pi + magic_num)
+
+## NOTE: Global scope can not use return type 'mend' must be used within a function
+chant ""
+chant "ENJOY JARKNIGHT HAZZUH AWAY!!!!!!"
