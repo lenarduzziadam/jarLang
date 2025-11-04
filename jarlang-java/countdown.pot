@@ -1,7 +1,0 @@
-# Countdown Demo
-chant "Starting countdown from 10..."
-
-wield counter 10
-lest counter > 0 (chant counter counter = counter - 2) 
-
-chant "Countdown complete!"
