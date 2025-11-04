@@ -1,0 +1,14 @@
+summon "files/stdlib.vase"
+
+chant "im bored and don't entirely know what to do" 
+
+forge boredom(name, vibes, num){
+    new_num = fib(num)
+    mend name + " got those " + vibes + " vibes " + new_num + " times "
+}
+
+forge add_num_tale(str, num){
+    mend str + " " + num
+}
+
+add_num_tale("Souija Boy Up in this", fact(12))
