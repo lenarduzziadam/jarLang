@@ -2036,6 +2036,13 @@ class JarlangParser {
                         CONSTANTS.TT_STRING.equals(currentToken.getType()))) {
 
                         ASTNode elifCond = expr();
+
+                        if (currentToken == null || !CONSTANTS.TT_COLON.equals(currentToken.getType())) {
+                            Position errPos = currentToken != null ? currentToken.getPosStart() : new Position(-1, 0, 0);
+                            throw new SyntaxError("Expected ':' after orjudge condition", errPos, filename);
+                        }
+                        advance(); // consume ':'
+                        
                         ASTNode elifBranch = statement();
                         ifNode.addBranch(elifCond, elifBranch);
                     } else {
@@ -2231,6 +2238,14 @@ class JarlangParser {
 
         // parse first condition and branch
         ASTNode condition = expr();
+
+        // Require colon after judge condition
+        if (currentToken == null || !CONSTANTS.TT_COLON.equals(currentToken.getType())) {
+            Position errPos = currentToken != null ? currentToken.getPosStart() : new Position(-1, 0, 0);
+            throw new SyntaxError("Expected ':' after judge condition", errPos, filename);
+        }
+        advance(); // consume ':'
+
         ASTNode thenBranch = statement(); // parse a full statement (block or single)
         ifNode.addBranch(condition, thenBranch);
 
@@ -2248,6 +2263,13 @@ class JarlangParser {
                 CONSTANTS.TT_STRING.equals(currentToken.getType()))) {
 
                 ASTNode elifCond = expr();
+                // Require colon after orjudge condition
+                if (currentToken == null || !CONSTANTS.TT_COLON.equals(currentToken.getType())) {
+                    Position errPos = currentToken != null ? currentToken.getPosStart() : new Position(-1, 0, 0);
+                    throw new SyntaxError("Expected ':' after orjudge condition", errPos, filename);
+                }
+                advance(); // consume ':'
+
                 ASTNode elifBranch = statement();
                 ifNode.addBranch(elifCond, elifBranch);
             } else {
