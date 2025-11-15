@@ -22,26 +22,26 @@ forge report_fail(label, expected, actual) {
 # assert_eq(expected, actual, label)
 forge assert_eq(expected, actual, label) {
   # numeric or string equality via '==' operator
-  judge expected == actual mend report_pass(label) orjudge mend report_fail(label, expected, actual)
+  judge expected == actual: mend report_pass(label) orjudge mend report_fail(label, expected, actual)
 }
 
 # assert_ne(expected, actual, label)
 forge assert_ne(expected, actual, label) {
-  judge expected != actual mend report_pass(label) orjudge mend report_fail(label, expected, actual)
+  judge expected != actual: mend report_pass(label) orjudge mend report_fail(label, expected, actual)
 }
 
 # assert_true(value, label) -- value considered true when numeric 1.0 or non-empty
 forge assert_true(value, label) {
   # treat numeric 1 as true
-  judge value == 1 mend report_pass(label) orjudge 
+  judge value == 1: mend report_pass(label) orjudge 
     # fallback: non-empty string considered true
-    judge value != "" mend report_pass(label) orjudge mend report_fail(label, 1, value)
+    judge value != "": mend report_pass(label) orjudge mend report_fail(label, 1, value)
 }
 
 # assert_false(value, label) -- true if numeric 0 or empty string
 forge assert_false(value, label) {
-  judge value == 0 mend report_pass(label) orjudge 
-    judge value == "" mend report_pass(label) orjudge mend report_fail(label, 0, value)
+  judge value == 0: mend report_pass(label) orjudge 
+    judge value == "": mend report_pass(label) orjudge mend report_fail(label, 0, value)
 }
 
 # Simple summary printer
