@@ -2,7 +2,7 @@
 
 ## MIN MAX RELEVANT FUNCTIONS
 forge max (a, b) {
-  judge a > b: mend a orjudge b > a: mend b
+  judge a > b: mend a orjudge mend b
 }
 
 forge min (a, b) {
@@ -110,7 +110,7 @@ forge pow_int(a, n) {
 }
 
 forge invert_sign(n) {
-  mend n * -1
+  judge n == 0.0: mend 0.0 orjudge mend n * -1
 }
 
 forge mod(a, b) {
