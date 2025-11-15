@@ -2,15 +2,15 @@
 
 ## MIN MAX RELEVANT FUNCTIONS
 forge max (a, b) {
-  judge a > b mend a orjudge b > a mend b
+  judge a > b: mend a orjudge mend b
 }
 
 forge min (a, b) {
-  judge a < b mend a orjudge mend b
+  judge a < b: mend a orjudge mend b
 }
 
 forge clamp (x, lo, hi) {
-  judge x < lo mend lo orjudge x > hi mend hi orjudge mend x
+  judge x < lo: mend lo orjudge x > hi: mend hi orjudge mend x
 }
 
 ##SIMPLE NUEMRIC
@@ -47,11 +47,11 @@ forge add1(x) {
 #MORE ADVANCED NUMERICS
 
 forge fact(n) {
-  judge n < 2 mend 1 orjudge mend n * fact(n - 1)
+  judge n < 2: mend 1 orjudge mend n * fact(n - 1)
 }
 
 forge fib(n) {
-  judge n < 2 mend n
+  judge n < 2: mend n
   wield a 0
   wield b 1
   wield i 1
@@ -69,7 +69,7 @@ forge mean2(a, b) {
 }
 
 forge abs(x) {
-  judge x < 0 mend -x orjudge mend x
+  judge x < 0: mend -x orjudge mend x
 }
 
 forge sumTo(n) {
@@ -77,13 +77,13 @@ forge sumTo(n) {
 }
 
 forge approx_equal(a, b, eps) {
-  judge abs(a - b) < eps mend 1 orjudge mend 0
+  judge abs(a - b) < eps: mend 1 orjudge mend 0
 }
 
 forge gcd(a, b) {
-  judge a == 0 mend b orjudge b == 0 mend a
+  judge a == 0: mend b orjudge b == 0: mend a
   lest a != b {
-    judge a > b { a = a - b } orjudge { b = b - a }
+    judge a > b: { a = a - b } orjudge { b = b - a }
   }
   mend a
 }
@@ -98,8 +98,8 @@ forge hypot(a, b) {
 }
 
 forge pow_int(a, n) {
-  judge n == 0 mend 1
-  judge n == 1 mend a
+  judge n == 0: mend 1
+  judge n == 1: mend a
   wield res 1
   wield i 0
   lest i < n {
@@ -110,12 +110,12 @@ forge pow_int(a, n) {
 }
 
 forge invert_sign(n) {
-  mend n * -1
+  judge n == 0.0: mend 0.0 orjudge mend n * -1
 }
 
 forge mod(a, b) {
   # handle division-by-zero defensively
-  judge b == 0 mend 0
+  judge b == 0: mend 0
   # make positive for a simple remainder
   wield aa a
   lest aa >= b {
@@ -125,7 +125,7 @@ forge mod(a, b) {
 }
 
 forge sign(x) {
-  judge x < 0 mend -1 orjudge x == 0 mend 0 orjudge mend 1
+  judge x < 0: mend -1 orjudge x == 0: mend 0 orjudge mend 1
 }
 
 forge sqrt(x) {
@@ -142,7 +142,7 @@ forge is_even(n) {
   lest x >= 2 {
     x = x - 2
   }
-  judge x == 0 mend 1 orjudge mend 0
+  judge x == 0: mend 1 orjudge mend 0
 }
 
 forge is_odd(n) {
@@ -150,12 +150,12 @@ forge is_odd(n) {
 }
 
 forge is_prime(n) {
-  judge n < 2 mend 0
-  judge n == 2 mend 1
-  judge mod(n,2) == 0 mend 0
+  judge n < 2: mend 0
+  judge n == 2: mend 1
+  judge mod(n,2) == 0: mend 0
   wield i 3
   lest (i * i) <= n {
-    judge mod(n, i) == 0 mend 0
+    judge mod(n, i) == 0: mend 0
     i = i + 2
   }
   mend 1
@@ -170,13 +170,13 @@ forge rad2deg(r) {
 }
 
 forge abs_int(x) {
-  judge x < 0 mend -x orjudge mend x
+  judge x < 0: mend -x orjudge mend x
 }
 
 forge safe_lcm(a, b) {
   wield aa abs_int(a)
   wield bb abs_int(b)
-  judge aa == 0 mend 0 orjudge bb == 0 mend 0
+  judge aa == 0: mend 0 orjudge bb == 0: mend 0
   mend (aa * bb) / gcd(aa, bb)
 }
 
@@ -202,7 +202,7 @@ forge tale_repeat(s, n) {
 
 # Simple is-empty check
 forge barren_tale(s) {
-  judge s == "" mend 1 orjudge mend 0
+  judge s == "": mend 1 orjudge mend 0
 }
 
 ## Constants and utility functions that demonstrate `vow` usage
@@ -245,7 +245,7 @@ forge orbital_period_seconds(a_meters) {
 # Example of a function that uses a local `vow` inside the function for a tolerance
 forge approx_equal_tol(a, b) {
   vow EPS 1 * 10 ^ -9
-  judge abs(a - b) < EPS mend 1 orjudge mend 0
+  judge abs(a - b) < EPS: mend 1 orjudge mend 0
 }
 
 # End of additional stdlib helpers

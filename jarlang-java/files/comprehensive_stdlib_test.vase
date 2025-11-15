@@ -1,0 +1,260 @@
+# Comprehensive stdlib.vase and testlib.vase test suite
+# Tests all functions defined in stdlib with assertions
+
+summon "stdlib.vase"
+summon "tests/testlib.vase"
+
+chant "=== COMPREHENSIVE STDLIB TEST SUITE ==="
+chant ""
+
+# ===========================================
+# MIN/MAX/CLAMP TESTS
+# ===========================================
+chant "Testing min/max/clamp functions..."
+assert_eq(5, max(3, 5), "max(3, 5) should be 5")
+assert_eq(5, max(5, 3), "max(5, 3) should be 5")
+assert_eq(5, max(5, 5), "max(5, 5) should be 5")
+
+assert_eq(3, min(3, 5), "min(3, 5) should be 3")
+assert_eq(3, min(5, 3), "min(5, 3) should be 3")
+assert_eq(5, min(5, 5), "min(5, 5) should be 5")
+
+assert_eq(5, clamp(3, 5, 10), "clamp(3, 5, 10) should be 5")
+assert_eq(10, clamp(15, 5, 10), "clamp(15, 5, 10) should be 10")
+assert_eq(7, clamp(7, 5, 10), "clamp(7, 5, 10) should be 7")
+
+# ===========================================
+# BASIC ARITHMETIC TESTS
+# ===========================================
+chant "Testing basic arithmetic functions..."
+assert_eq(8, commune(3, 5), "commune(3, 5) should be 8")
+assert_eq(2, banish(5, 3), "banish(5, 3) should be 2")
+assert_eq(15, rally(3, 5), "rally(3, 5) should be 15")
+assert_eq(2, slash(10, 5), "slash(10, 5) should be 2")
+assert_eq(8, ascend(2, 3), "ascend(2, 3) should be 8")
+assert_eq(6, add1(5), "add1(5) should be 6")
+
+# ===========================================
+# ADVANCED NUMERIC TESTS
+# ===========================================
+chant "Testing factorial..."
+assert_eq(1, fact(0), "fact(0) should be 1")
+assert_eq(1, fact(1), "fact(1) should be 1")
+assert_eq(2, fact(2), "fact(2) should be 2")
+assert_eq(6, fact(3), "fact(3) should be 6")
+assert_eq(24, fact(4), "fact(4) should be 24")
+assert_eq(120, fact(5), "fact(5) should be 120")
+
+chant "Testing fibonacci..."
+assert_eq(0, fib(0), "fib(0) should be 0")
+assert_eq(1, fib(1), "fib(1) should be 1")
+assert_eq(1, fib(2), "fib(2) should be 1")
+assert_eq(2, fib(3), "fib(3) should be 2")
+assert_eq(3, fib(4), "fib(4) should be 3")
+assert_eq(5, fib(5), "fib(5) should be 5")
+assert_eq(8, fib(6), "fib(6) should be 8")
+assert_eq(13, fib(7), "fib(7) should be 13")
+
+chant "Testing mean2..."
+assert_eq(4, mean2(3, 5), "mean2(3, 5) should be 4")
+assert_eq(5, mean2(5, 5), "mean2(5, 5) should be 5")
+assert_eq(0, mean2(-5, 5), "mean2(-5, 5) should be 0")
+
+chant "Testing abs..."
+assert_eq(5, abs(5), "abs(5) should be 5")
+assert_eq(5, abs(-5), "abs(-5) should be 5")
+assert_eq(0, abs(0), "abs(0) should be 0")
+
+chant "Testing sumTo..."
+assert_eq(0, sumTo(0), "sumTo(0) should be 0")
+assert_eq(1, sumTo(1), "sumTo(1) should be 1")
+assert_eq(15, sumTo(5), "sumTo(5) should be 15")
+assert_eq(55, sumTo(10), "sumTo(10) should be 55")
+
+chant "Testing gcd..."
+assert_eq(6, gcd(54, 24), "gcd(54, 24) should be 6")
+assert_eq(1, gcd(17, 13), "gcd(17, 13) should be 1")
+assert_eq(5, gcd(5, 5), "gcd(5, 5) should be 5")
+assert_eq(10, gcd(10, 0), "gcd(10, 0) should be 10")
+
+chant "Testing lcm..."
+assert_eq(12, lcm(3, 4), "lcm(3, 4) should be 12")
+assert_eq(30, lcm(5, 6), "lcm(5, 6) should be 30")
+
+chant "Testing hypot..."
+assert_eq(5, hypot(3, 4), "hypot(3, 4) should be 5")
+assert_eq(13, hypot(5, 12), "hypot(5, 12) should be 13")
+
+chant "Testing pow_int..."
+assert_eq(1, pow_int(2, 0), "pow_int(2, 0) should be 1")
+assert_eq(2, pow_int(2, 1), "pow_int(2, 1) should be 2")
+assert_eq(8, pow_int(2, 3), "pow_int(2, 3) should be 8")
+assert_eq(1024, pow_int(2, 10), "pow_int(2, 10) should be 1024")
+assert_eq(27, pow_int(3, 3), "pow_int(3, 3) should be 27")
+
+chant "Testing invert_sign..."
+assert_eq(-5, invert_sign(5), "invert_sign(5) should be -5")
+assert_eq(5, invert_sign(-5), "invert_sign(-5) should be 5")
+assert_eq(0, invert_sign(0), "invert_sign(0) should be 0")
+
+chant "Testing mod..."
+assert_eq(1, mod(7, 3), "mod(7, 3) should be 1")
+assert_eq(0, mod(10, 5), "mod(10, 5) should be 0")
+assert_eq(4, mod(14, 5), "mod(14, 5) should be 4")
+
+chant "Testing sign..."
+assert_eq(1, sign(5), "sign(5) should be 1")
+assert_eq(-1, sign(-5), "sign(-5) should be -1")
+assert_eq(0, sign(0), "sign(0) should be 0")
+
+chant "Testing sqrt..."
+assert_eq(4, sqrt(16), "sqrt(16) should be 4")
+assert_eq(5, sqrt(25), "sqrt(25) should be 5")
+assert_eq(10, sqrt(100), "sqrt(100) should be 10")
+
+chant "Testing map_range..."
+assert_eq(50, map_range(5, 0, 10, 0, 100), "map_range(5, 0, 10, 0, 100) should be 50")
+assert_eq(0, map_range(0, 0, 10, 0, 100), "map_range(0, 0, 10, 0, 100) should be 0")
+assert_eq(100, map_range(10, 0, 10, 0, 100), "map_range(10, 0, 10, 0, 100) should be 100")
+
+# ===========================================
+# EVEN/ODD TESTS
+# ===========================================
+chant "Testing is_even..."
+assert_eq(1, is_even(0), "is_even(0) should be 1")
+assert_eq(1, is_even(2), "is_even(2) should be 1")
+assert_eq(1, is_even(4), "is_even(4) should be 1")
+assert_eq(0, is_even(1), "is_even(1) should be 0")
+assert_eq(0, is_even(3), "is_even(3) should be 0")
+
+chant "Testing is_odd..."
+assert_eq(0, is_odd(0), "is_odd(0) should be 0")
+assert_eq(0, is_odd(2), "is_odd(2) should be 0")
+assert_eq(1, is_odd(1), "is_odd(1) should be 1")
+assert_eq(1, is_odd(3), "is_odd(3) should be 1")
+
+# ===========================================
+# PRIME NUMBER TESTS
+# ===========================================
+chant "Testing is_prime..."
+assert_eq(0, is_prime(0), "is_prime(0) should be 0")
+assert_eq(0, is_prime(1), "is_prime(1) should be 0")
+assert_eq(1, is_prime(2), "is_prime(2) should be 1")
+assert_eq(1, is_prime(3), "is_prime(3) should be 1")
+assert_eq(0, is_prime(4), "is_prime(4) should be 0")
+assert_eq(1, is_prime(5), "is_prime(5) should be 1")
+assert_eq(0, is_prime(6), "is_prime(6) should be 0")
+assert_eq(1, is_prime(7), "is_prime(7) should be 1")
+assert_eq(0, is_prime(8), "is_prime(8) should be 0")
+assert_eq(0, is_prime(9), "is_prime(9) should be 0")
+assert_eq(0, is_prime(10), "is_prime(10) should be 0")
+assert_eq(1, is_prime(11), "is_prime(11) should be 1")
+assert_eq(1, is_prime(13), "is_prime(13) should be 1")
+
+# ===========================================
+# ANGLE CONVERSION TESTS
+# ===========================================
+chant "Testing deg2rad and rad2deg..."
+wield rad90 deg2rad(90)
+wield deg_back rad2deg(rad90)
+assert_true(approx_equal(90, deg_back, 0.001), "deg2rad/rad2deg roundtrip should work")
+
+wield rad180 deg2rad(180)
+wield deg180_back rad2deg(rad180)
+assert_true(approx_equal(180, deg180_back, 0.001), "deg2rad(180) roundtrip should work")
+
+# ===========================================
+# ABS_INT AND SAFE_LCM TESTS
+# ===========================================
+chant "Testing abs_int..."
+assert_eq(5, abs_int(5), "abs_int(5) should be 5")
+assert_eq(5, abs_int(-5), "abs_int(-5) should be 5")
+assert_eq(0, abs_int(0), "abs_int(0) should be 0")
+
+chant "Testing safe_lcm..."
+assert_eq(0, safe_lcm(0, 5), "safe_lcm(0, 5) should be 0")
+assert_eq(0, safe_lcm(5, 0), "safe_lcm(5, 0) should be 0")
+assert_eq(12, safe_lcm(3, 4), "safe_lcm(3, 4) should be 12")
+assert_eq(12, safe_lcm(-3, 4), "safe_lcm(-3, 4) should be 12")
+
+# ===========================================
+# STRING HELPER TESTS
+# ===========================================
+chant "Testing string helpers..."
+assert_eq("helloworld", concat("hello", "world"), "concat should join strings")
+assert_eq("hello5", concat("hello", 5), "concat should coerce numbers")
+
+assert_eq("", tale_repeat("x", 0), "tale_repeat with 0 should be empty")
+assert_eq("xxx", tale_repeat("x", 3), "tale_repeat('x', 3) should be 'xxx'")
+assert_eq("haha", tale_repeat("ha", 2), "tale_repeat('ha', 2) should be 'haha'")
+
+assert_eq(1, barren_tale(""), "barren_tale('') should be 1")
+assert_eq(0, barren_tale("hello"), "barren_tale('hello') should be 0")
+
+# ===========================================
+# CONSTANT TESTS
+# ===========================================
+chant "Testing constants..."
+assert_true(KELVIN_OFFSET > 273, "KELVIN_OFFSET should be > 273")
+assert_true(G_SI > 9, "G_SI should be > 9")
+
+chant "Testing temperature conversions..."
+wield kelvin celsius_to_kelvin(0)
+assert_true(approx_equal(273.15, kelvin, 0.01), "celsius_to_kelvin(0) should be ~273.15")
+
+wield celsius kelvin_to_celsius(273.15)
+assert_true(approx_equal(0, celsius, 0.01), "kelvin_to_celsius(273.15) should be ~0")
+
+# ===========================================
+# PHYSICS TESTS
+# ===========================================
+chant "Testing physics functions..."
+wield pe potential_energy(10, 5)
+assert_true(pe > 400, "potential_energy(10, 5) should be > 400")
+
+wield orb_period orbital_period_years(1)
+assert_true(approx_equal(1, orb_period, 0.01), "orbital_period_years(1) should be ~1")
+
+# ===========================================
+# APPROX_EQUAL TESTS
+# ===========================================
+chant "Testing approx_equal..."
+assert_eq(1, approx_equal(1.0, 1.0001, 0.001), "approx_equal(1.0, 1.0001, 0.001) should be 1")
+assert_eq(0, approx_equal(1.0, 1.1, 0.001), "approx_equal(1.0, 1.1, 0.001) should be 0")
+
+chant "Testing approx_equal_tol..."
+assert_eq(1, approx_equal_tol(1.0, 1.0), "approx_equal_tol(1.0, 1.0) should be 1")
+
+# ===========================================
+# CIRCLE AREA TEST
+# ===========================================
+chant "Testing circle_area..."
+wield area circle_area(1)
+assert_true(approx_equal(pi, area, 0.01), "circle_area(1) should be ~pi")
+
+wield area2 circle_area(2)
+wield expected 4 * pi
+assert_true(approx_equal(expected, area2, 0.01), "circle_area(2) should be ~4*pi")
+
+# ===========================================
+# TESTLIB ASSERTION TESTS
+# ===========================================
+chant ""
+chant "Testing testlib assertion functions..."
+assert_eq(5, 5, "assert_eq with equal values should pass")
+assert_ne(3, 5, "assert_ne with different values should pass")
+assert_true(1, "assert_true with 1 should pass")
+assert_false(0, "assert_false with 0 should pass")
+
+# ===========================================
+# FINAL SUMMARY
+# ===========================================
+chant ""
+chant "==================================="
+vow failures test_summary()
+chant "==================================="
+
+
+judge failures == 0 : chant "ALL TESTS PASSED!" orjudge chant "SOME TESTS FAILED!"
+
+test_reset()

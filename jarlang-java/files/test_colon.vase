@@ -1,0 +1,57 @@
+# Test file for colon syntax in judge/orjudge statements
+
+chant "=== Testing Colon Syntax ==="
+
+# Test 1: Simple judge with colon
+wield x 10
+judge x > 5 : chant "x is greater than 5"
+
+# Test 2: judge with orjudge (multiple conditions)
+wield score 85
+
+judge score >= 90 : chant "Grade A"
+orjudge score >= 80 : chant "Grade B"
+orjudge score >= 70 : chant "Grade C"
+orjudge score >= 60 : chant "Grade D"
+orjudge chant "Grade F"
+
+# Test 3: Nested comparisons
+wield temp 75
+
+judge temp < 32 : chant "Freezing"
+orjudge temp < 50 : chant "Cold"
+orjudge temp < 70 : chant "Cool"
+orjudge temp < 85 : chant "Warm"
+orjudge chant "Hot"
+
+# Test 4: With blocks
+wield num 42
+
+judge num < 10 : {
+    chant "Single digit"
+    chant "Very small"
+}
+orjudge num < 50 : {
+    chant "Two digits"
+    chant "Medium number"
+}
+orjudge {
+    chant "Large number"
+    chant "50 or more"
+}
+
+# Test 5: Boolean expressions
+wield a 5
+wield b 5
+
+judge a == b : chant "a equals b"
+orjudge a != b : chant "a does not equal b"
+
+# Test 6: Complex condition
+wield age 25
+
+judge age >= 18 : chant "Adult"
+orjudge age >= 13 : chant "Teenager"
+orjudge chant "Child"
+
+chant "=== All Tests Complete ==="
