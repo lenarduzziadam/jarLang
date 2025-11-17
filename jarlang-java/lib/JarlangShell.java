@@ -39,6 +39,10 @@ public class JarlangShell {
     public void runREPL() {
         scanner = new Scanner(System.in);
         globalContext = new Context("global");
+        
+        // Register array builtins
+        JarlangCollections.registerAllBuiltins(globalContext);
+        
         System.out.println("Jarlang REPL - Type 'q!' to quit or '!help' for help");
         
         while (true) {
