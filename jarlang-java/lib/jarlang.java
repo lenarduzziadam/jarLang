@@ -1553,6 +1553,22 @@ class FunctionCallNode extends ASTNode {
     @Override
     public Result evaluate(Context context) throws InterpreterError {
         Object obj = context.getVariable(name);
+        
+        // Check for builtin function first (array operations, etc.)
+        if (obj instanceof JarlangCollections.BuiltinFunction) {
+            JarlangCollections.BuiltinFunction builtin = (JarlangCollections.BuiltinFunction) obj;
+            // Evaluate all arguments in the current context
+            List<Object> evaluatedArgs = new ArrayList<>();
+            for (ASTNode arg : args) {
+                Result r = arg.evaluate(context);
+                // Pass the raw value (Double, String, JarlangArray, etc.)
+                evaluatedArgs.add(r.getValue());
+            }
+            // Call the builtin and wrap result
+            Object result = builtin.call(evaluatedArgs, context);
+            return new Result(result);
+        }
+        
         if (obj == null || !(obj instanceof JarlangFunction)) {
             throw new InterpreterError("Undefined function: " + name);
         }
@@ -1679,6 +1695,10 @@ class Result {
     public boolean isNumber() { return type == ResultType.NUMBER; }
     public boolean isString() { return type == ResultType.STRING; }
     public boolean isObject() { return type == ResultType.OBJECT; }
+    
+    public boolean isArray() {
+        return isObject() && value instanceof JarlangCollections.JarlangArray;
+    }
 
     public double asNumber() {
         if (isNumber()) {
@@ -1698,6 +1718,13 @@ class Result {
     public Object asObject() {
         if (isObject()) return value;
         return value; // allow returning primitive-wrapped value too
+    }
+    
+    public JarlangCollections.JarlangArray asArray() {
+        if (isArray()) {
+            return (JarlangCollections.JarlangArray) value;
+        }
+        throw new RuntimeException("Result is not an array");
     }
 
     public Object getValue() { return value; }

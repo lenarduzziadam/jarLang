@@ -1,0 +1,386 @@
+# Advanced Array Tests with stdlib and testlib integration
+# Tests array operations combined with stdlib functions and testlib assertions
+
+summon "stdlib.vase"
+summon "tests/testlib.vase"
+
+chant "=== Advanced Array Testing with stdlib & testlib ==="
+chant ""
+
+# ============================================================
+# Test Group 1: Arrays with stdlib math functions
+# ============================================================
+chant "Test Group 1: Arrays with stdlib math functions"
+
+# Test 1.1: Create array of fibonacci numbers
+wield fib_arr array_new()
+wield i 0
+lest i < 8 {
+    wield fib_val fib(i)
+    array_push(fib_arr, fib_val)
+    i = i + 1
+}
+assert_eq(array_len(fib_arr), 8, "Fibonacci array should have 8 elements")
+assert_eq(array_get(fib_arr, 0), 0, "fib(0) = 0")
+assert_eq(array_get(fib_arr, 1), 1, "fib(1) = 1")
+assert_eq(array_get(fib_arr, 5), 5, "fib(5) = 5")
+assert_eq(array_get(fib_arr, 7), 13, "fib(7) = 13")
+
+# Test 1.2: Array of factorials
+wield fact_arr array_new(fact(0), fact(1), fact(2), fact(3), fact(4), fact(5))
+assert_eq(array_len(fact_arr), 6, "Factorial array length = 6")
+assert_eq(array_get(fact_arr, 0), 1, "0! = 1")
+assert_eq(array_get(fact_arr, 3), 6, "3! = 6")
+assert_eq(array_get(fact_arr, 5), 120, "5! = 120")
+
+# Test 1.3: Array of squares using pow_int
+wield squares array_new()
+wield n 1
+lest n <= 5 {
+    array_push(squares, pow_int(n, 2))
+    n = n + 1
+}
+assert_eq(array_get(squares, 0), 1, "1^2 = 1")
+assert_eq(array_get(squares, 2), 9, "3^2 = 9")
+assert_eq(array_get(squares, 4), 25, "5^2 = 25")
+
+chant ""
+
+# ============================================================
+# Test Group 2: Array aggregation with stdlib
+# ============================================================
+chant "Test Group 2: Array aggregation operations"
+
+# Test 2.1: Find max element in array
+wield nums array_new(45, 23, 67, 89, 12, 34)
+wield current_max array_get(nums, 0)
+wield idx 1
+lest idx < array_len(nums) {
+    wield val array_get(nums, idx)
+    current_max = max(current_max, val)
+    idx = idx + 1
+}
+assert_eq(current_max, 89, "Maximum element should be 89")
+
+# Test 2.2: Find min element in array
+wield current_min array_get(nums, 0)
+idx = 1
+lest idx < array_len(nums) {
+    wield val array_get(nums, idx)
+    current_min = min(current_min, val)
+    idx = idx + 1
+}
+assert_eq(current_min, 12, "Minimum element should be 12")
+
+# Test 2.3: Calculate mean of array using mean2 helper
+wield sum_total 0
+idx = 0
+lest idx < array_len(nums) {
+    sum_total = sum_total + array_get(nums, idx)
+    idx = idx + 1
+}
+wield avg sum_total / array_len(nums)
+assert_eq(avg, 45, "Average of [45,23,67,89,12,34] should be 45")
+
+chant ""
+
+# ============================================================
+# Test Group 3: Arrays with string operations
+# ============================================================
+chant "Test Group 3: Arrays with string operations"
+
+# Test 3.1: Array of concatenated strings
+wield words array_new("warrior", "battle", "victory")
+wield sentence ""
+idx = 0
+lest idx < array_len(words) {
+    wield word array_get(words, idx)
+    sentence = concat(sentence, word)
+    judge idx < array_len(words) - 1:
+        sentence = concat(sentence, " ");
+    idx = idx + 1
+}
+assert_eq(sentence, "warrior battle victory", "Concatenated sentence")
+
+# Test 3.2: Check for empty strings with barren_tale
+wield mixed_strings array_new("hello", "", "world", "")
+wield empty_count 0
+idx = 0
+lest idx < array_len(mixed_strings) {
+    wield str array_get(mixed_strings, idx)
+    wield is_empty barren_tale(str)
+    empty_count = empty_count + is_empty
+    idx = idx + 1
+}
+assert_eq(empty_count, 2, "Should find 2 empty strings")
+
+chant ""
+
+# ============================================================
+# Test Group 4: Arrays with predicates (is_even, is_odd, is_prime)
+# ============================================================
+chant "Test Group 4: Arrays with predicate functions"
+
+# Test 4.1: Filter even numbers
+wield numbers array_new(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+wield evens array_new()
+idx = 0
+lest idx < array_len(numbers) {
+    wield num array_get(numbers, idx)
+    judge is_even(num) == 1:
+        array_push(evens, num);
+    idx = idx + 1
+}
+assert_eq(array_len(evens), 5, "Should have 5 even numbers")
+assert_eq(array_get(evens, 0), 2, "First even is 2")
+assert_eq(array_get(evens, 4), 10, "Last even is 10")
+
+# Test 4.2: Filter odd numbers
+wield odds array_new()
+idx = 0
+lest idx < array_len(numbers) {
+    wield num array_get(numbers, idx)
+    judge is_odd(num) == 1:
+        array_push(odds, num);
+    idx = idx + 1
+}
+assert_eq(array_len(odds), 5, "Should have 5 odd numbers")
+
+# Test 4.3: Find prime numbers
+wield primes array_new()
+wield test_nums array_new(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 20)
+idx = 0
+lest idx < array_len(test_nums) {
+    wield num array_get(test_nums, idx)
+    judge is_prime(num) == 1:
+        array_push(primes, num);
+    
+    idx = idx + 1
+}
+assert_eq(array_len(primes), 8, "Should find 8 primes in test set")
+assert_eq(array_get(primes, 0), 2, "First prime is 2")
+assert_eq(array_get(primes, 7), 19, "8th prime is 19")
+
+chant ""
+
+# ============================================================
+# Test Group 5: Nested arrays with calculations
+# ============================================================
+chant "Test Group 5: Nested arrays with mathematical operations"
+
+# Test 5.1: Matrix operations - sum all elements
+wield row1 array_new(1, 2, 3)
+wield row2 array_new(4, 5, 6)
+wield row3 array_new(7, 8, 9)
+wield matrix array_new(row1, row2, row3)
+
+wield matrix_sum 0
+wield row_idx 0
+lest row_idx < array_len(matrix) {
+    wield row array_get(matrix, row_idx)
+    wield col_idx 0
+    lest col_idx < array_len(row) {
+        matrix_sum = matrix_sum + array_get(row, col_idx)
+        col_idx = col_idx + 1
+    }
+    row_idx = row_idx + 1
+}
+assert_eq(matrix_sum, 45, "Sum of 3x3 matrix (1-9) should be 45")
+
+# Test 5.2: Calculate diagonal sum
+wield diag_sum 0
+wield d 0
+lest d < 3 {
+    wield row array_get(matrix, d)
+    wield elem array_get(row, d)
+    diag_sum = diag_sum + elem
+    d = d + 1
+}
+assert_eq(diag_sum, 15, "Diagonal sum (1+5+9) should be 15")
+
+chant ""
+
+# ============================================================
+# Test Group 6: Array transformations with clamp and map_range
+# ============================================================
+chant "Test Group 6: Array transformations"
+
+# Test 6.1: Clamp values in array
+wield raw_values array_new(-5, 0, 5, 10, 15, 20, 25)
+wield clamped array_new()
+idx = 0
+lest idx < array_len(raw_values) {
+    wield val array_get(raw_values, idx)
+    wield clamped_val clamp(val, 0, 20)
+    array_push(clamped, clamped_val)
+    idx = idx + 1
+}
+assert_eq(array_get(clamped, 0), 0, "Clamped -5 should be 0")
+assert_eq(array_get(clamped, 5), 20, "Clamped 20 should be 20")
+assert_eq(array_get(clamped, 6), 20, "Clamped 25 should be 20")
+
+# Test 6.2: Map values from one range to another
+wield source array_new(0, 25, 50, 75, 100)
+wield mapped array_new()
+idx = 0
+lest idx < array_len(source) {
+    wield val array_get(source, idx)
+    wield mapped_val map_range(val, 0, 100, 0, 10)
+    array_push(mapped, mapped_val)
+    idx = idx + 1
+}
+assert_eq(array_get(mapped, 0), 0, "Mapped 0 should be 0")
+assert_eq(array_get(mapped, 2), 5, "Mapped 50 should be 5")
+assert_eq(array_get(mapped, 4), 10, "Mapped 100 should be 10")
+
+chant ""
+
+# ============================================================
+# Test Group 7: Physics calculations with arrays
+# ============================================================
+chant "Test Group 7: Arrays with physics functions"
+
+# Test 7.1: Array of potential energies
+wield masses array_new(10, 20, 30, 40, 50)
+wield height 100
+wield energies array_new()
+idx = 0
+lest idx < array_len(masses) {
+    wield mass array_get(masses, idx)
+    wield pe potential_energy(mass, height)
+    array_push(energies, pe)
+    idx = idx + 1
+}
+# PE = m * g * h, where g ≈ 9.80665
+# For m=10, h=100: PE = 10 * 9.80665 * 100 = 9806.65
+assert_eq(array_get(energies, 0), 9806.65, "PE for 10kg at 100m")
+
+# Test 7.2: Temperature conversions array
+wield celsius_temps array_new(0, 25, 100)
+wield kelvin_temps array_new()
+idx = 0
+lest idx < array_len(celsius_temps) {
+    wield temp array_get(celsius_temps, idx)
+    wield kelvin celsius_to_kelvin(temp)
+    array_push(kelvin_temps, kelvin)
+    idx = idx + 1
+}
+assert_eq(array_get(kelvin_temps, 0), 273.15, "0°C = 273.15K")
+assert_eq(array_get(kelvin_temps, 2), 373.15, "100°C = 373.15K")
+
+chant ""
+
+# ============================================================
+# Test Group 8: Array modifications and state management
+# ============================================================
+chant "Test Group 8: Complex array modifications"
+
+# Test 8.1: Reverse array elements
+wield original array_new(1, 2, 3, 4, 5)
+wield reversed array_new()
+wield rev_idx array_len(original) - 1
+lest rev_idx >= 0 {
+    array_push(reversed, array_get(original, rev_idx))
+    rev_idx = rev_idx - 1
+}
+assert_eq(array_get(reversed, 0), 5, "First element of reversed is 5")
+assert_eq(array_get(reversed, 4), 1, "Last element of reversed is 1")
+
+# Test 8.2: Remove duplicates (simple version)
+wield with_dupes array_new(1, 2, 2, 3, 3, 3, 4, 5, 5)
+wield unique array_new()
+wield prev -999
+idx = 0
+lest idx < array_len(with_dupes) {
+    wield val array_get(with_dupes, idx)
+    judge val != prev:
+        array_push(unique, val)
+        prev = val;
+    
+    idx = idx + 1
+}
+assert_eq(array_len(unique), 5, "Should have 5 unique values")
+
+# Test 8.3: Array resize using pop
+wield resizable array_new(10, 20, 30, 40, 50)
+wield initial_len array_len(resizable)
+assert_eq(initial_len, 5, "Initial length is 5")
+array_pop(resizable)
+array_pop(resizable)
+assert_eq(array_len(resizable), 3, "After 2 pops, length is 3")
+
+chant ""
+
+# ============================================================
+# Test Group 9: Edge cases and error conditions
+# ============================================================
+chant "Test Group 9: Edge cases"
+
+# Test 9.1: Empty array operations
+wield empty array_new()
+assert_eq(array_len(empty), 0, "Empty array has length 0")
+assert_eq(barren_tale(array_to_string(empty)), 0, "Empty array string is '[]' not empty")
+
+# Test 9.2: Single element operations
+wield single array_new(42)
+assert_eq(array_len(single), 1, "Single element array length is 1")
+assert_eq(array_get(single, 0), 42, "Single element value is 42")
+wield popped array_pop(single)
+assert_eq(popped, 42, "Popped value is 42")
+assert_eq(array_len(single), 0, "After pop, length is 0")
+
+# Test 9.3: Array with all same values
+wield same_vals array_new(7, 7, 7, 7)
+wield all_same 1
+idx = 0
+lest idx < array_len(same_vals) - 1 {
+    judge array_get(same_vals, idx) != array_get(same_vals, idx + 1):
+        all_same = 0;
+    idx = idx + 1
+}
+assert_eq(all_same, 1, "All values should be the same")
+
+chant ""
+
+# ============================================================
+# Test Group 10: Complex nested structures
+# ============================================================
+chant "Test Group 10: Complex nested arrays"
+
+# Test 10.1: 3D array (cube)
+wield layer1 array_new(array_new(1, 2), array_new(3, 4))
+wield layer2 array_new(array_new(5, 6), array_new(7, 8))
+wield cube array_new(layer1, layer2)
+
+wield l1 array_get(cube, 0)
+wield l1r1 array_get(l1, 0)
+wield val array_get(l1r1, 1)
+assert_eq(val, 2, "cube[0][0][1] should be 2")
+
+wield l2 array_get(cube, 1)
+wield l2r2 array_get(l2, 1)
+wield val2 array_get(l2r2, 1)
+assert_eq(val2, 8, "cube[1][1][1] should be 8")
+
+# Test 10.2: Jagged array (rows of different lengths)
+wield jagged array_new(array_new(1), array_new(2, 3), array_new(4, 5, 6))
+assert_eq(array_len(array_get(jagged, 0)), 1, "First row has 1 element")
+assert_eq(array_len(array_get(jagged, 1)), 2, "Second row has 2 elements")
+assert_eq(array_len(array_get(jagged, 2)), 3, "Third row has 3 elements")
+
+chant ""
+
+# ============================================================
+# Final Summary
+# ============================================================
+chant "=== TEST COMPLETE ==="
+test_summary()
+
+wield total_tests (TEST_PASSES + TEST_FAILS)
+chant "Total tests executed: " + total_tests
+
+
+judge TEST_FAILS == 0.0:
+    chant "🗡️ ALL TESTS PASSED! Arrays fully integrated! 🗡️"
+orjudge
+    chant "⚔️ Some tests failed. Review output above. ⚔️";

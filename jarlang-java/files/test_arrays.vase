@@ -1,0 +1,149 @@
+# Jarlang Array Testing
+# This file tests the integrated array data structure
+
+chant "=== Testing Jarlang Arrays ==="
+chant ""
+
+# Test 1: Create empty array
+chant "Test 1: Creating empty array"
+wield arr1 array_new()
+chant "Created empty array: "
+chant array_to_string(arr1)
+chant "Length: "
+chant array_len(arr1)
+chant ""
+
+# Test 2: Create array with initial values
+chant "Test 2: Creating array with initial values"
+wield arr2 array_new(1, 2, 3, 4, 5)
+chant "Created array: "
+chant array_to_string(arr2)
+chant "Length: "
+chant array_len(arr2)
+chant ""
+
+# Test 3: Array get operations
+chant "Test 3: Getting elements from array"
+wield first array_get(arr2, 0)
+wield third array_get(arr2, 2)
+wield last array_get(arr2, 4)
+chant "First element (index 0): "
+chant first
+chant "Third element (index 2): "
+chant third
+chant "Last element (index 4): "
+chant last
+chant ""
+
+# Test 4: Array set operations
+chant "Test 4: Setting elements in array"
+chant "Before: "
+chant array_to_string(arr2)
+array_set(arr2, 0, 10)
+array_set(arr2, 2, 30)
+chant "After setting index 0 to 10 and index 2 to 30: "
+chant array_to_string(arr2)
+chant ""
+
+# Test 5: Array push operations
+chant "Test 5: Pushing elements to array"
+wield arr3 array_new()
+chant "Empty array: "
+chant array_to_string(arr3)
+wield len1 array_push(arr3, 100)
+chant "After push(100), length = "
+chant len1
+wield len2 array_push(arr3, 200)
+chant "After push(200), length = "
+chant len2
+wield len3 array_push(arr3, 300, 400)
+chant "After push(300, 400), length = "
+chant len3
+chant "Final array: "
+chant array_to_string(arr3)
+chant ""
+
+# Test 6: Array pop operations
+chant "Test 6: Popping elements from array"
+chant "Before pop: "
+chant array_to_string(arr3)
+wield popped1 array_pop(arr3)
+chant "Popped value: "
+chant popped1
+chant "After pop: "
+chant array_to_string(arr3)
+wield popped2 array_pop(arr3)
+chant "Popped value: "
+chant popped2
+chant "After second pop: "
+chant array_to_string(arr3)
+chant ""
+
+# Test 7: Mixed types in arrays
+chant "Test 7: Arrays with mixed types"
+wield mixed array_new(1, "hello", 3.14, "world")
+chant "Mixed array: "
+chant array_to_string(mixed)
+wield str_elem array_get(mixed, 1)
+chant "String element at index 1: "
+chant str_elem
+wield num_elem array_get(mixed, 2)
+chant "Number element at index 2: "
+chant num_elem
+chant ""
+
+# Test 8: Storing arrays in variables
+chant "Test 8: Working with array variables"
+wield numbers array_new(10, 20, 30)
+chant "Original array: "
+chant array_to_string(numbers)
+array_push(numbers, 40)
+array_push(numbers, 50)
+chant "After adding elements: "
+chant array_to_string(numbers)
+wield sum 0
+wield i 0
+wield arr_len array_len(numbers)
+lest i < arr_len {
+    wield val array_get(numbers, i)
+    sum = sum + val
+    i = i + 1
+}
+chant "Sum of all elements: "
+chant sum
+chant ""
+
+# Test 9: Array iteration with conditions
+chant "Test 9: Processing array elements"
+wield scores array_new(85, 92, 78, 95, 88)
+chant "Scores: "
+chant array_to_string(scores)
+wield count_a 0
+wield idx 0
+lest idx < array_len(scores) {
+    wield score array_get(scores, idx)
+    judge score >= 90: 
+        count_a = count_a + 1;
+    idx = idx + 1
+}
+
+chant "Number of A grades (>=90): "
+chant count_a
+chant ""
+
+# Test 10: Nested array operations
+chant "Test 10: Nested arrays"
+wield row1 array_new(1, 2, 3)
+wield row2 array_new(4, 5, 6)
+wield matrix array_new(row1, row2)
+chant "Matrix (nested array): "
+chant array_to_string(matrix)
+wield first_row array_get(matrix, 0)
+chant "First row: "
+chant array_to_string(first_row)
+wield elem array_get(first_row, 1)
+chant "Element at [0][1]: "
+chant elem
+chant ""
+
+chant "=== Array Tests Complete ==="

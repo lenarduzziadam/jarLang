@@ -27,6 +27,9 @@ public class JarlangFileRunner {
         StringBuilder output = new StringBuilder();
         Context globalContext = new Context("file:" + filepath);
         
+        // Register array builtins
+        JarlangCollections.registerAllBuiltins(globalContext);
+        
 
         try {
 
@@ -181,6 +184,9 @@ public class JarlangFileRunner {
         try {
             // Create a dedicated module context so module-level variables and closures live there
             Context moduleCtx = new Context("module:" + canonical);
+            
+            // Register array builtins in module context
+            JarlangCollections.registerAllBuiltins(moduleCtx);
 
             // Parse & run module into its module context
             String content = readFile(canonical);
