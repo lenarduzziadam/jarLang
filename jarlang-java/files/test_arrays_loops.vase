@@ -1,0 +1,429 @@
+# Comprehensive Array Verification Test with Loops
+# Tests arrays integrated with lest loops, judge conditions, and stdlib
+
+summon "stdlib.vase"
+summon "tests/testlib.vase"
+
+chant "=== Comprehensive Array & Loop Verification ==="
+chant ""
+
+# ============================================================
+# Test Group 1: Basic loop iteration over arrays
+# ============================================================
+chant "Test Group 1: Basic loop iteration"
+
+# Test 1.1: Iterate and sum array elements
+wield arr1 array_new(5, 10, 15, 20, 25)
+wield sum1 0
+wield i 0
+lest i < array_len(arr1) {
+    sum1 = sum1 + array_get(arr1, i)
+    i = i + 1
+}
+assert_eq(sum1, 75, "Sum of [5,10,15,20,25] should be 75")
+
+# Test 1.2: Iterate and count elements matching condition
+wield arr2 array_new(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+wield count 0
+i = 0
+lest i < array_len(arr2) {
+    wield elem array_get(arr2, i)
+    judge elem > 5:
+        count = count + 1
+    i = i + 1
+}
+assert_eq(count, 5, "Count of elements > 5 should be 5")
+
+# Test 1.3: Iterate with nested condition
+wield scores array_new(45, 78, 92, 55, 88, 61, 95)
+wield grade_a 0
+wield grade_b 0
+i = 0
+lest i < array_len(scores) {
+    wield score array_get(scores, i)
+    judge score >= 90:
+        grade_a = grade_a + 1
+    orjudge judge score >= 80:
+        grade_b = grade_b + 1
+    i = i + 1
+}
+assert_eq(grade_a, 2, "Should have 2 A grades")
+assert_eq(grade_b, 2, "Should have 2 B grades")
+
+chant ""
+
+# ============================================================
+# Test Group 2: Loop with array modifications
+# ============================================================
+chant "Test Group 2: Loop with array modifications"
+
+# Test 2.1: Build array in loop
+wield nums array_new()
+wield n 1
+lest n <= 10 {
+    array_push(nums, pow_int(n, 2))
+    n = n + 1
+}
+assert_eq(array_len(nums), 10, "Should have 10 perfect squares")
+assert_eq(array_get(nums, 0), 1, "First square is 1")
+assert_eq(array_get(nums, 9), 100, "Last square is 100")
+
+# Test 2.2: Transform array in loop
+wield original array_new(1, 2, 3, 4, 5)
+wield doubled array_new()
+i = 0
+lest i < array_len(original) {
+    wield val array_get(original, i)
+    array_push(doubled, val * 2)
+    i = i + 1
+}
+assert_eq(array_get(doubled, 0), 2, "First doubled value is 2")
+assert_eq(array_get(doubled, 4), 10, "Last doubled value is 10")
+
+# Test 2.3: Filter with conditional push
+wield numbers array_new(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
+wield prime_nums array_new()
+i = 0
+lest i < array_len(numbers) {
+    wield num array_get(numbers, i)
+    judge is_prime(num) == 1:
+        array_push(prime_nums, num)
+    i = i + 1
+}
+assert_eq(array_len(prime_nums), 6, "Should find 6 primes")
+
+chant ""
+
+# ============================================================
+# Test Group 3: Nested loops with arrays
+# ============================================================
+chant "Test Group 3: Nested loops"
+
+# Test 3.1: Nested loop to create matrix
+wield matrix array_new()
+wield row 1
+lest row <= 3 {
+    wield row_arr array_new()
+    wield col 1
+    lest col <= 3 {
+        array_push(row_arr, row * 10 + col)
+        col = col + 1
+    }
+    array_push(matrix, row_arr)
+    row = row + 1
+}
+assert_eq(array_len(matrix), 3, "Matrix should have 3 rows")
+wield first_row array_get(matrix, 0)
+assert_eq(array_len(first_row), 3, "Each row should have 3 elements")
+assert_eq(array_get(first_row, 0), 11, "First element should be 11")
+
+# Test 3.2: Nested loop to sum matrix
+wield m array_new(array_new(1, 2, 3), array_new(4, 5, 6), array_new(7, 8, 9))
+wield mat_sum 0
+wield r 0
+lest r < array_len(m) {
+    wield row_data array_get(m, r)
+    wield c 0
+    lest c < array_len(row_data) {
+        mat_sum = mat_sum + array_get(row_data, c)
+        c = c + 1
+    }
+    r = r + 1
+}
+assert_eq(mat_sum, 45, "Sum of 3x3 matrix should be 45")
+
+# Test 3.3: Nested loop with multiple conditions
+wield data array_new(array_new(1, 5, 9), array_new(2, 6, 10), array_new(3, 7, 11))
+wield over_5_count 0
+r = 0
+lest r < array_len(data) {
+    wield row_vals array_get(data, r)
+    c = 0
+    lest c < array_len(row_vals) {
+        wield val array_get(row_vals, c)
+        judge val > 5:
+            over_5_count = over_5_count + 1
+        c = c + 1
+    }
+    r = r + 1
+}
+assert_eq(over_5_count, 6, "Should count 6 values > 5")
+
+chant ""
+
+# ============================================================
+# Test Group 4: Loop with array pop/modification
+# ============================================================
+chant "Test Group 4: Loop with pop operations"
+
+# Test 4.1: Pop and sum
+wield stack array_new(10, 20, 30, 40, 50)
+wield popped_sum 0
+lest array_len(stack) > 0 {
+    wield popped array_pop(stack)
+    popped_sum = popped_sum + popped
+}
+assert_eq(popped_sum, 150, "Sum of popped elements should be 150")
+assert_eq(array_len(stack), 0, "Stack should be empty")
+
+# Test 4.2: Process and pop
+wield work_queue array_new(5, 4, 3, 2, 1)
+wield product 1
+lest array_len(work_queue) > 0 {
+    wield item array_pop(work_queue)
+    product = product * item
+}
+assert_eq(product, 120, "Product should be 5*4*3*2*1 = 120")
+
+chant ""
+
+# ============================================================
+# Test Group 5: Loop with multiple arrays
+# ============================================================
+chant "Test Group 5: Operations on multiple arrays"
+
+# Test 5.1: Iterate through two arrays together
+wield arr_a array_new(1, 2, 3, 4, 5)
+wield arr_b array_new(10, 20, 30, 40, 50)
+wield combined array_new()
+i = 0
+lest i < array_len(arr_a) {
+    wield val_a array_get(arr_a, i)
+    wield val_b array_get(arr_b, i)
+    array_push(combined, val_a + val_b)
+    i = i + 1
+}
+assert_eq(array_get(combined, 0), 11, "First combined value should be 11")
+assert_eq(array_get(combined, 4), 55, "Last combined value should be 55")
+
+# Test 5.2: Compare arrays with loop
+wield list1 array_new(1, 2, 3)
+wield list2 array_new(1, 2, 3)
+wield lists_equal 1
+i = 0
+lest i < array_len(list1) {
+    judge array_get(list1, i) != array_get(list2, i):
+        lists_equal = 0
+    i = i + 1
+}
+assert_eq(lists_equal, 1, "Lists should be equal")
+
+chant ""
+
+# ============================================================
+# Test Group 6: Loop with accumulation patterns
+# ============================================================
+chant "Test Group 6: Accumulation patterns"
+
+# Test 6.1: Find max in array
+wield values array_new(45, 23, 78, 12, 89, 34, 56)
+wield max_val array_get(values, 0)
+i = 1
+lest i < array_len(values) {
+    wield val array_get(values, i)
+    judge val > max_val:
+        max_val = val
+    i = i + 1
+}
+assert_eq(max_val, 89, "Maximum should be 89")
+
+# Test 6.2: Find min in array
+wield min_val array_get(values, 0)
+i = 1
+lest i < array_len(values) {
+    wield val array_get(values, i)
+    judge val < min_val:
+        min_val = val
+    i = i + 1
+}
+assert_eq(min_val, 12, "Minimum should be 12")
+
+# Test 6.3: Calculate average
+wield total 0
+i = 0
+lest i < array_len(values) {
+    total = total + array_get(values, i)
+    i = i + 1
+}
+wield average total / array_len(values)
+assert_eq(average, 48, "Average should be 48")
+
+chant ""
+
+# ============================================================
+# Test Group 7: Loop with string arrays
+# ============================================================
+chant "Test Group 7: String array loops"
+
+# Test 7.1: Iterate and concatenate strings
+wield words array_new("The", "quick", "brown", "fox")
+wield sentence ""
+i = 0
+lest i < array_len(words) {
+    wield word array_get(words, i)
+    sentence = concat(sentence, word)
+    judge i < array_len(words) - 1:
+        sentence = concat(sentence, " ")
+    i = i + 1
+}
+assert_eq(sentence, "The quick brown fox", "Sentence should match")
+
+# Test 7.2: Count non-empty strings
+wield strings array_new("hello", "", "world", "", "test", "")
+wield nonempty_count 0
+i = 0
+lest i < array_len(strings) {
+    wield str array_get(strings, i)
+    judge barren_tale(str) == 0:
+        nonempty_count = nonempty_count + 1
+    i = i + 1
+}
+assert_eq(nonempty_count, 3, "Should count 3 non-empty strings")
+
+chant ""
+
+# ============================================================
+# Test Group 8: Loop with conditional continue patterns
+# ============================================================
+chant "Test Group 8: Conditional patterns"
+
+# Test 8.1: Skip and process
+wield mixed array_new(1, 0, 2, 0, 3, 0, 4)
+wield nonzero_product 1
+i = 0
+lest i < array_len(mixed) {
+    wield elem array_get(mixed, i)
+    judge elem != 0:
+        nonzero_product = nonzero_product * elem
+    i = i + 1
+}
+assert_eq(nonzero_product, 24, "Product of non-zero should be 24")
+
+# Test 8.2: Early termination simulation
+wield search_arr array_new(10, 20, 30, 40, 50)
+wield found 0
+wield found_idx -1
+i = 0
+lest i < array_len(search_arr) {
+    wield elem array_get(search_arr, i)
+    judge elem == 30:
+        found = 1
+        found_idx = i
+    i = i + 1
+}
+assert_eq(found, 1, "Should find element")
+assert_eq(found_idx, 2, "Element should be at index 2")
+
+chant ""
+
+# ============================================================
+# Test Group 9: Combining loops with stdlib functions
+# ============================================================
+chant "Test Group 9: Loops with stdlib functions"
+
+# Test 9.1: Apply function in loop
+wield raw_nums array_new(2, 3, 4, 5)
+wield factorial_results array_new()
+i = 0
+lest i < array_len(raw_nums) {
+    wield num array_get(raw_nums, i)
+    wield result fact(num)
+    array_push(factorial_results, result)
+    i = i + 1
+}
+assert_eq(array_get(factorial_results, 2), 24, "4! = 24")
+assert_eq(array_get(factorial_results, 3), 120, "5! = 120")
+
+# Test 9.2: Filter with predicate in loop
+wield test_nums array_new(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+wield even_arr array_new()
+i = 0
+lest i < array_len(test_nums) {
+    wield num array_get(test_nums, i)
+    judge is_even(num) == 1:
+        array_push(even_arr, num)
+    i = i + 1
+}
+assert_eq(array_len(even_arr), 5, "Should have 5 even numbers")
+
+# Test 9.3: Apply range mapping in loop
+wield input_vals array_new(0, 50, 100)
+wield mapped_vals array_new()
+i = 0
+lest i < array_len(input_vals) {
+    wield val array_get(input_vals, i)
+    wield mapped map_range(val, 0, 100, 0, 1)
+    array_push(mapped_vals, mapped)
+    i = i + 1
+}
+assert_eq(array_get(mapped_vals, 0), 0, "Mapped 0 should be 0")
+assert_eq(array_get(mapped_vals, 1), 0.5, "Mapped 50 should be 0.5")
+assert_eq(array_get(mapped_vals, 2), 1, "Mapped 100 should be 1")
+
+chant ""
+
+# ============================================================
+# Test Group 10: Complex multi-loop scenarios
+# ============================================================
+chant "Test Group 10: Complex scenarios"
+
+# Test 10.1: Bubble sort simulation with array
+wield to_sort array_new(5, 2, 8, 1, 9)
+wield pass 0
+lest pass < array_len(to_sort) {
+    wield j 0
+    lest j < array_len(to_sort) - 1 {
+        wield curr array_get(to_sort, j)
+        wield next array_get(to_sort, j + 1)
+        judge curr > next:
+            {
+                array_set(to_sort, j, next)
+                array_set(to_sort, j + 1, curr)
+            }
+        j = j + 1
+    }
+    pass = pass + 1
+}
+wield first_sorted array_get(to_sort, 0)
+wield last_sorted array_get(to_sort, 4)
+assert_eq(first_sorted, 1, "First element after sort should be 1")
+assert_eq(last_sorted, 9, "Last element after sort should be 9")
+
+# Test 10.2: Create combinations in nested loop
+wield set_a array_new(1, 2)
+wield set_b array_new("x", "y")
+wield pairs array_new()
+i = 0
+lest i < array_len(set_a) {
+    wield a array_get(set_a, i)
+    j = 0
+    lest j < array_len(set_b) {
+        wield b array_get(set_b, j)
+        wield pair array_new(a, b)
+        array_push(pairs, pair)
+        j = j + 1
+    }
+    i = i + 1
+}
+assert_eq(array_len(pairs), 4, "Should have 4 pairs")
+
+chant ""
+
+# ============================================================
+# Final Summary
+# ============================================================
+chant "=== VERIFICATION COMPLETE ==="
+
+wield final_total TEST_PASSES + TEST_FAILS
+chant "Total assertions verified: " + final_total
+
+test_summary()
+
+judge TEST_FAILS > 0: {
+    chant "⚔️ Some tests failed. Review output above. ⚔️"
+} orjudge {
+    chant "🗡️ ALL VERIFICATION TESTS PASSED! 🗡️"
+    chant "Arrays are fully integrated with loops and stdlib!"
+}
+
+test_reset()
