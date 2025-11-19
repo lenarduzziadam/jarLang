@@ -1,0 +1,25 @@
+# Test file for new colon syntax in orjudge statements
+
+wield x 5
+
+# Example 1: Simple if-elif-else with colons
+judge x < 3 chant "x is less than 3"
+orjudge x > 3 : chant "x is greater than 3"
+orjudge chant "x equals 3"
+
+# Example 2: Multiple orjudge with colons
+judge x == 1 : chant "one"
+orjudge x == 2 : chant "two"
+orjudge x == 5 : chant "five - this should print"
+orjudge chant "other"
+
+# Example 3: With blocks
+judge x < 0 : {
+  chant "negative"
+}
+orjudge x == 0 : {
+  chant "zero"
+}
+orjudge x > 0 : {
+  chant "positive - this should print"
+}
